@@ -44,7 +44,8 @@ const generateAppointmentPDF = async (appointment, organization, branch, appoint
 
       // -- Detail rows --
       const details = [
-        ['Service', appointmentType.name],
+        ['Service', appointmentType.nameNp ? `${appointmentType.name} (${appointmentType.nameNp})` : appointmentType.name],
+        ['Room/Section', appointment.roomNo ? (appointment.roomNoNp ? `${appointment.roomNo} (${appointment.roomNoNp})` : appointment.roomNo) : 'N/A'],
         ['Mode', appointment.mode === 'virtual' ? 'Virtual (Online)' : 'In-Person'],
         ['Date', new Date(appointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })],
         ['Time', `${appointment.startTime} - ${appointment.endTime}`],

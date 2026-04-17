@@ -16,7 +16,7 @@ export default function Branches() {
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ name:'', code:'', address:'', province:'', district:'', city:'', phone:'', email:'', organization:'', lat:'27.7172', lng:'85.3240', maxConcurrentBookings:5, workingHours: defaultHours });
+  const [form, setForm] = useState<any>({ name:'', nameNp:'', code:'', address:'', addressNp:'', province:'', district:'', city:'', phone:'', email:'', organization:'', lat:'27.7172', lng:'85.3240', maxConcurrentBookings:5, workingHours: defaultHours });
 
   const fetchAll = () => {
     setLoading(true);
@@ -26,8 +26,8 @@ export default function Branches() {
   };
   useEffect(fetchAll, []);
 
-  const openNew = () => { setForm({ name:'', code:'', address:'', province:'', district:'', city:'', phone:'', email:'', organization: user?.organization || orgs[0]?._id || '', lat:'27.7172', lng:'85.3240', maxConcurrentBookings:5, workingHours: defaultHours.map(h=>({...h})) }); setEditing(null); setModal(true); };
-  const openEdit = (b: any) => { setForm({ name:b.name, code:b.code, address:b.address, province:b.province||'', district:b.district||'', city:b.city||'', phone:b.phone||'', email:b.email||'', organization: typeof b.organization==='object' ? b.organization._id : b.organization, lat:String(b.location?.coordinates?.[1]||'27.7172'), lng:String(b.location?.coordinates?.[0]||'85.3240'), maxConcurrentBookings:b.maxConcurrentBookings, workingHours: b.workingHours?.length ? b.workingHours.map((h:any)=>({...h})) : defaultHours.map(h=>({...h})) }); setEditing(b); setModal(true); };
+  const openNew = () => { setForm({ name:'', nameNp:'', code:'', address:'', addressNp:'', province:'', district:'', city:'', phone:'', email:'', organization: user?.organization || orgs[0]?._id || '', lat:'27.7172', lng:'85.3240', maxConcurrentBookings:5, workingHours: defaultHours.map(h=>({...h})) }); setEditing(null); setModal(true); };
+  const openEdit = (b: any) => { setForm({ name:b.name, nameNp:b.nameNp||'', code:b.code, address:b.address, addressNp:b.addressNp||'', province:b.province||'', district:b.district||'', city:b.city||'', phone:b.phone||'', email:b.email||'', organization: typeof b.organization==='object' ? b.organization._id : b.organization, lat:String(b.location?.coordinates?.[1]||'27.7172'), lng:String(b.location?.coordinates?.[0]||'85.3240'), maxConcurrentBookings:b.maxConcurrentBookings, workingHours: b.workingHours?.length ? b.workingHours.map((h:any)=>({...h})) : defaultHours.map(h=>({...h})) }); setEditing(b); setModal(true); };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,9 +100,11 @@ export default function Branches() {
                 <option value="">Select...</option>{orgs.map(o=><option key={o._id} value={o._id}>{o.name}</option>)}
               </select></div>}
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="input-field" required/></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (English) *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="input-field" required/></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (Nepali)</label><input value={form.nameNp} onChange={e=>setForm({...form,nameNp:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code *</label><input value={form.code} onChange={e=>setForm({...form,code:e.target.value.toUpperCase()})} className="input-field font-mono" required placeholder="e.g. IRD-KTM"/></div>
-                <div className="sm:col-span-2"><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address *</label><input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="input-field" required/></div>
+                <div className="sm:col-span-2"><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address (English) *</label><input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="input-field" required/></div>
+                <div className="sm:col-span-2"><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address (Nepali)</label><input value={form.addressNp} onChange={e=>setForm({...form,addressNp:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Province</label><input value={form.province} onChange={e=>setForm({...form,province:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">District</label><input value={form.district} onChange={e=>setForm({...form,district:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label><input value={form.city} onChange={e=>setForm({...form,city:e.target.value})} className="input-field"/></div>

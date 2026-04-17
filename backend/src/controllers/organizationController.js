@@ -34,7 +34,7 @@ exports.getAll = async (req, res, next) => {
 exports.getPublicList = async (req, res, next) => {
   try {
     const orgs = await Organization.find({ isActive: true })
-      .select('name slug description logo category branding')
+      .select('name nameNp slug description logo category branding')
       .sort({ name: 1 });
     res.json({ organizations: orgs });
   } catch (error) { next(error); }

@@ -16,7 +16,8 @@ export default function AppointmentTypes() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({
-    name: '', description: '', organization: '', duration: 30, bufferTime: 5, price: 0,
+    name: '', nameNp: '', description: '', organization: '', duration: 30, bufferTime: 5, price: 0,
+    roomNo: '', roomNoNp: '',
     mode: 'in_person', color: '#2563eb', maxBookingsPerSlot: 1, requiresApproval: false,
     sortOrder: 0, customFields: [] as any[],
     // Scope
@@ -45,8 +46,9 @@ export default function AppointmentTypes() {
 
   const openNew = () => {
     setForm({
-      name: '', description: '', organization: (user?.organization as any)?._id || user?.organization || orgs[0]?._id || '',
+      name: '', nameNp: '', description: '', organization: (user?.organization as any)?._id || user?.organization || orgs[0]?._id || '',
       duration: 30, bufferTime: 5, price: 0, mode: 'in_person', color: '#2563eb',
+      roomNo: '', roomNoNp: '',
       maxBookingsPerSlot: 1, requiresApproval: false, sortOrder: 0, customFields: [],
       applyToAllOrgs: false, applyToAllBranches: true, selectedBranches: [],
     });
@@ -56,8 +58,9 @@ export default function AppointmentTypes() {
   const openEdit = (t: any) => {
     const branchIds = (t.branches || []).map((b: any) => typeof b === 'object' ? b._id : b);
     setForm({
-      name: t.name, description: t.description || '', organization: t.organization,
+      name: t.name, nameNp: t.nameNp || '', description: t.description || '', organization: t.organization,
       duration: t.duration, bufferTime: t.bufferTime, price: t.price, mode: t.mode,
+      roomNo: t.roomNo || '', roomNoNp: t.roomNoNp || '',
       color: t.color, maxBookingsPerSlot: t.maxBookingsPerSlot,
       requiresApproval: t.requiresApproval, sortOrder: t.sortOrder,
       customFields: t.customFields || [],
@@ -187,7 +190,10 @@ export default function AppointmentTypes() {
               )}
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input-field" required /></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (English) *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input-field" required /></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (Nepali)</label><input value={form.nameNp} onChange={e => setForm({ ...form, nameNp: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Room/Section (English)</label><input value={form.roomNo} onChange={e => setForm({ ...form, roomNo: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Room/Section (Nepali)</label><input value={form.roomNoNp} onChange={e => setForm({ ...form, roomNoNp: e.target.value })} className="input-field" /></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mode</label>
                   <select value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })} className="input-field">
                     <option value="in_person">In-Person</option><option value="virtual">Virtual</option><option value="both">Both</option>

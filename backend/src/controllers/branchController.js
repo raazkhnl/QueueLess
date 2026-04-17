@@ -35,7 +35,7 @@ exports.getAll = async (req, res, next) => {
 exports.getPublicByOrg = async (req, res, next) => {
   try {
     const branches = await Branch.find({ organization: req.params.orgId, isActive: true })
-      .select('name code address province district city location workingHours holidays phone email maxConcurrentBookings')
+      .select('name nameNp code address addressNp province district city location workingHours holidays phone email maxConcurrentBookings')
       .sort({ name: 1 });
     res.json({ branches });
   } catch (error) { next(error); }

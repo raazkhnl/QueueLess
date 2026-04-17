@@ -38,7 +38,7 @@ const seed = async () => {
 
     // Organization 1: IRD Nepal
     const irdOrg = await Organization.create({
-      name: 'Inland Revenue Department', slug: 'ird-nepal',
+      name: 'Inland Revenue Department', nameNp: 'आन्तरिक राजस्व विभाग', slug: 'ird-nepal',
       description: 'Government tax service department of Nepal',
       category: 'government', email: 'info@ird.gov.np', phone: '01-4415802',
       address: 'Lazimpat, Kathmandu', createdBy: superAdmin._id,
@@ -53,12 +53,32 @@ const seed = async () => {
     });
 
     // IRD Branches
-    const irdKtm = await Branch.create({
-      organization: irdOrg._id, name: 'Kathmandu Main Office', code: 'IRD-KTM',
-      address: 'Lazimpat, Kathmandu', province: 'Bagmati', district: 'Kathmandu', city: 'Kathmandu',
-      location: { type: 'Point', coordinates: [85.3189, 27.7199] },
-      phone: '01-4415802', email: 'ktm@ird.gov.np',
+    const branchDataList = [
+      { name: 'Internal Revenue Department Main Office, Lazimpat', nameNp: 'आन्तरिक राजस्व विभाग, लाजिम्पाट', code: 'IRD-10', address: 'Lazimpat, Kathmandu', lat: 27.7285, lng: 85.3239 },
+      { name: 'Inland Revenue Office, Khumaltar, Chitwan', nameNp: 'आ.रा.का. खुमलटार चितवन', code: 'IRD-100', address: 'Bharatpur, Chitwan', lat: 27.6833, lng: 84.4333 },
+      { name: 'Inland Revenue Office, Gangotri', nameNp: 'आ.रा.का. गंगोत्री', code: 'IRD-101', address: 'Gangotri Marg, Biratnagar', lat: 26.4535, lng: 87.2832 },
+      { name: 'Inland Revenue Office, Bardiya', nameNp: 'आ.रा.का. बर्दिया', code: 'IRD-102', address: 'Gulariya, Bardiya', lat: 28.1333, lng: 81.3333 },
+      { name: 'Inland Revenue Office, Jhatti', nameNp: 'आन्तरिक राजस्व कार्यालय, झट्टी', code: 'IRD-103', address: 'Jhatti, Morang', lat: 26.5000, lng: 87.3500 },
+      { name: 'Inland Revenue Office, Kalanki', nameNp: 'आन्तरिक राजस्व कार्यालय, कलंकी', code: 'IRD-104', address: 'Kalanki Chowk, Kathmandu', lat: 27.6931, lng: 85.2902 },
+      { name: 'Inland Revenue Office, Kalimati', nameNp: 'आन्तरिक राजस्व कार्यालय, कालिमाटी', code: 'IRD-105', address: 'Kalimati, Kathmandu', lat: 27.7000, lng: 85.3000 },
+      { name: 'Inland Revenue Office, Kapan', nameNp: 'आन्तरिक राजस्व कार्यालय, कपन', code: 'IRD-106', address: 'Kapan, Kathmandu', lat: 27.7400, lng: 85.3500 },
+      { name: 'Inland Revenue Office, Krishnanagar', nameNp: 'आन्तरिक राजस्व कार्यालय, कृष्णनगर', code: 'IRD-107', address: 'Krishnanagar, Kapilvastu', lat: 27.5200, lng: 83.0500 },
+      { name: 'Inland Revenue Office, Kanchanpur', nameNp: 'आन्तरिक राजस्व कार्यालय, कञ्चनपुर', code: 'IRD-108', address: 'Mahendranagar, Kanchanpur', lat: 28.6890, lng: 80.5560 },
+      { name: 'Inland Revenue Office, Koteshwor', nameNp: 'आन्तरिक राजस्व कार्यालय, कोटेश्वर', code: 'IRD-109', address: 'Koteshwor, Kathmandu', lat: 27.6859, lng: 85.3451 },
+      { name: 'Inland Revenue Office, Chabahil', nameNp: 'आन्तरिक राजस्व कार्यालय, चाबहिल', code: 'IRD-110', address: 'Chabahil, Kathmandu', lat: 27.7176, lng: 85.3440 },
+      { name: 'Inland Revenue Office, Janakpur', nameNp: 'आन्तरिक राजस्व कार्यालय, जनकपुर', code: 'IRD-111', address: 'Ramananda Chowk, Janakpur', lat: 26.7280, lng: 85.9240 },
+      { name: 'Inland Revenue Office, Jumla', nameNp: 'आन्तरिक राजस्व कार्यालय, जुम्ला', code: 'IRD-112', address: 'Khalanga, Jumla', lat: 29.2800, lng: 82.1830 },
+      { name: 'Inland Revenue Office, Tangal', nameNp: 'आन्तरिक राजस्व कार्यालय, टङ्गल', code: 'IRD-113', address: 'Tangal, Kathmandu', lat: 27.7170, lng: 85.3240 },
+      { name: 'Inland Revenue Office, Nagarpalika', nameNp: 'आन्तरिक राजस्व कार्यालय, नगरपालिक', code: 'IRD-114', address: 'Municipal Complex, Bhaktapur', lat: 27.6710, lng: 85.4290 },
+      { name: 'District Treasury Controller Office, Kolenika', nameNp: 'जिल्ला कोष तथा लेखा नियन्त्रण कार्यालय, कोलेनिका', code: 'IRD-1001', address: 'Kolenika, Lalitpur', lat: 27.6500, lng: 85.3200 }
+    ];
+
+    const irdBranches = await Promise.all(branchDataList.map(b => Branch.create({
+      organization: irdOrg._id, name: b.name, nameNp: b.nameNp, code: b.code,
+      address: b.address,
+      location: { type: 'Point', coordinates: [b.lng, b.lat] },
       maxConcurrentBookings: 10,
+      phone: '01-4415802', email: 'hello@ird.gov.np',
       workingHours: [
         { day: 0, isOpen: true, openTime: '10:00', closeTime: '15:00' },
         { day: 1, isOpen: true, openTime: '10:00', closeTime: '16:00' },
@@ -72,23 +92,11 @@ const seed = async () => {
         { date: new Date('2026-01-01'), name: 'New Year', isRecurring: true },
         { date: new Date('2026-04-14'), name: 'Nepali New Year' },
       ]
-    });
+    })));
 
-    const irdPkr = await Branch.create({
-      organization: irdOrg._id, name: 'Pokhara Office', code: 'IRD-PKR',
-      address: 'Lakeside, Pokhara', province: 'Gandaki', district: 'Kaski', city: 'Pokhara',
-      location: { type: 'Point', coordinates: [83.9856, 28.2096] },
-      phone: '061-520001', email: 'pokhara@ird.gov.np',
-      maxConcurrentBookings: 5,
-    });
-
-    const irdBrt = await Branch.create({
-      organization: irdOrg._id, name: 'Biratnagar Office', code: 'IRD-BRT',
-      address: 'Main Road, Biratnagar', province: 'Koshi', district: 'Morang', city: 'Biratnagar',
-      location: { type: 'Point', coordinates: [87.2718, 26.4525] },
-      phone: '021-440001', email: 'brt@ird.gov.np',
-      maxConcurrentBookings: 5,
-    });
+    const irdKtm = irdBranches[0];
+    const irdPkr = irdBranches[1];
+    const irdBrt = irdBranches[2];
 
     // IRD Staff
     const irdManager = await User.create({
@@ -112,7 +120,8 @@ const seed = async () => {
 
     // IRD Appointment Types
     const irdPAN = await AppointmentType.create({
-      organization: irdOrg._id, name: 'PAN Registration',
+      organization: irdOrg._id, name: 'PAN Registration', nameNp: 'प्यान दर्ता',
+      roomNo: 'Room-102', roomNoNp: 'कोठा-१०२',
       description: 'Register for Permanent Account Number', duration: 30,
       bufferTime: 5, price: 0, mode: 'in_person', color: '#2563eb', icon: 'file-text',
       customFields: [
@@ -123,14 +132,16 @@ const seed = async () => {
     });
 
     const irdTax = await AppointmentType.create({
-      organization: irdOrg._id, name: 'Tax Filing Consultation',
+      organization: irdOrg._id, name: 'Tax Filing Consultation', nameNp: 'कर दाखिला परामर्श',
+      roomNo: 'Section B', roomNoNp: 'खण्ड ख',
       description: 'Consult with tax officer for filing support', duration: 45,
       bufferTime: 10, price: 0, mode: 'both', color: '#059669', icon: 'calculator',
       sortOrder: 2
     });
 
     const irdClearance = await AppointmentType.create({
-      organization: irdOrg._id, name: 'Tax Clearance Certificate',
+      organization: irdOrg._id, name: 'Tax Clearance Certificate', nameNp: 'कर चुक्ता प्रमाणपत्र',
+      roomNo: 'Room-101 Service Section', roomNoNp: 'कोठा-१०१ सेवा खण्ड',
       description: 'Apply for tax clearance certificate', duration: 20,
       bufferTime: 5, price: 500, mode: 'in_person', color: '#d97706', icon: 'award',
       customFields: [

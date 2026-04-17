@@ -26,9 +26,11 @@ const dateOverrideSchema = new mongoose.Schema({
 const branchSchema = new mongoose.Schema({
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
   name: { type: String, required: true, trim: true },
+  nameNp: { type: String, trim: true },
   code: { type: String, required: true, uppercase: true },
   description: { type: String },
   address: { type: String, required: true },
+  addressNp: { type: String },
   province: { type: String },
   district: { type: String },
   city: { type: String },

@@ -66,6 +66,8 @@ exports.book = async (req, res, next) => {
       price: apptType.price, notes,
       customFieldValues: customFieldValues ? new Map(Object.entries(customFieldValues)) : undefined,
       status: (apptType.requiresApproval || orgDoc?.settings?.requireApproval) ? 'pending' : 'confirmed',
+      roomNo: apptType.roomNo,
+      roomNoNp: apptType.roomNoNp,
     };
 
     // Check if org allows guest booking

@@ -34,7 +34,7 @@ exports.getPublicByOrg = async (req, res, next) => {
     const query = { organization: req.params.orgId, isActive: true, isSuspended: { $ne: true } };
     if (branch) query.$or = [{ branches: branch }, { branches: { $size: 0 } }];
     const types = await AppointmentType.find(query)
-      .select('name slug description duration bufferTime price mode color icon customFields maxBookingsPerSlot requiresApproval sortOrder isSuspended')
+      .select('name nameNp slug description duration bufferTime price mode color icon customFields maxBookingsPerSlot requiresApproval sortOrder isSuspended roomNo roomNoNp')
       .sort({ sortOrder: 1, name: 1 });
     res.json({ appointmentTypes: types });
   } catch (error) { next(error); }

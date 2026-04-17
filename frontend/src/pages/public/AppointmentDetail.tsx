@@ -3,12 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Phone, Mail, Download, FileDown, ArrowLeft, CheckCircle2, XCircle, AlertCircle, ExternalLink, Star, Navigation } from 'lucide-react';
 import { appointmentAPI, feedbackAPI } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
+import { useI18n } from '../../lib/i18n';
 import { formatDate, formatTime, statusColors, downloadBlob } from '../../lib/utils';
 import toast from 'react-hot-toast';
 
 export default function AppointmentDetail() {
   const { refCode } = useParams();
   const { user } = useAuthStore();
+  const { t, lang } = useI18n();
   const [apt, setApt] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,8 +80,8 @@ export default function AppointmentDetail() {
 
       <div className="card overflow-hidden">
         <div className="p-6 text-center" style={{ background: `linear-gradient(135deg, ${org?.branding?.primaryColor || '#2563eb'}, ${org?.branding?.secondaryColor || '#1e40af'})` }}>
-          <p className="text-white/70 text-sm font-medium mb-1">{org?.name}</p>
-          <h1 className="font-display text-2xl font-bold text-white mb-3">Appointment Details</h1>
+          <p className="text-white/70 text-sm font-medium mb-1">{lang === 'ne' && org?.nameNp ? org.nameNp : org?.name}</p>
+          <h1 className="font-display text-2xl font-bold text-white mb-3">{t('booking.confirmed') || 'Appointment Details'}</h1>
           <span className={`inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-semibold text-sm capitalize`}>
             {apt.status === 'confirmed' ? <CheckCircle2 className="w-5 h-5" /> : apt.status === 'cancelled' ? <XCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             {apt.status.replace('_', ' ')}
@@ -102,8 +104,9 @@ export default function AppointmentDetail() {
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: (type?.color || '#2563eb') + '15' }}>
                 <Clock className="w-5 h-5" style={{ color: type?.color }} /></div>
-              <div><p className="text-xs text-slate-500">Service</p><p className="font-semibold">{type?.name}</p>
-                {type?.description && <p className="text-sm text-slate-500">{type.description}</p>}
+              <div><p className="text-xs text-slate-500">Service</p><p className="font-semibold">{lang === 'ne' && type?.nameNp ? type.nameNp : type?.name}</p>
+                {apt.roomNo && <p className="text-sm font-medium text-emerald-600 mt-1">{lang === 'ne' && apt.roomNoNp ? apt.roomNoNp : apt.roomNo}</p>}
+                {type?.description && <p className="text-sm text-slate-500 mt-0.5">{type.description}</p>}
                 {apt.price > 0 && <p className="text-sm font-medium text-primary-600 mt-1">NPR {apt.price}</p>}</div>
             </div>
 
@@ -112,8 +115,8 @@ export default function AppointmentDetail() {
               <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-slate-500" /></div>
               <div className="flex-1">
                 <p className="text-xs text-slate-500">Location</p>
-                <p className="font-semibold">{branch?.name}</p>
-                <p className="text-sm text-slate-500">{branch?.address}</p>
+                <p className="font-semibold">{lang === 'ne' && branch?.nameNp ? branch.nameNp : branch?.name}</p>
+                <p className="text-sm text-slate-500">{lang === 'ne' && branch?.addressNp ? branch.addressNp : branch?.address}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100 transition-colors">
                     <Navigation className="w-3.5 h-3.5" />Open in Maps
@@ -136,7 +139,7 @@ export default function AppointmentDetail() {
             {(org?.phone || org?.email) && (
               <div className="card p-4 bg-slate-50 border-slate-200 dark:border-slate-700">
                 <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Organization Contact</h4>
-                <p className="font-semibold text-sm">{org.name}</p>
+                <p className="font-semibold text-sm">{lang === 'ne' && org?.nameNp ? org.nameNp : org?.name}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {org.phone && <a href={`tel:${org.phone}`} className="inline-flex items-center gap-1.5 text-xs text-primary-600 hover:underline"><Phone className="w-3 h-3" />{org.phone}</a>}
                   {org.email && <a href={`mailto:${org.email}`} className="inline-flex items-center gap-1.5 text-xs text-primary-600 hover:underline"><Mail className="w-3 h-3" />{org.email}</a>}

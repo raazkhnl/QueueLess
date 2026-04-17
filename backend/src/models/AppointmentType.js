@@ -28,6 +28,7 @@ const appointmentTypeSchema = new mongoose.Schema({
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
   branches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Branch' }],
   name: { type: String, required: true, trim: true },
+  nameNp: { type: String, trim: true },
   slug: { type: String },
   description: { type: String },
   duration: { type: Number, required: true, default: 30 },
@@ -43,6 +44,8 @@ const appointmentTypeSchema = new mongoose.Schema({
   isSuspended: { type: Boolean, default: false }, // Temporary suspension
   suspendReason: { type: String },
   sortOrder: { type: Number, default: 0 },
+  roomNo: { type: String },
+  roomNoNp: { type: String },
   // Custom operating hours (if empty, uses branch hours)
   useCustomHours: { type: Boolean, default: false },
   customHours: [serviceHoursSchema],

@@ -43,6 +43,8 @@ const appointmentSchema = new mongoose.Schema({
   checkedInAt: { type: Date },
   completedAt: { type: Date },
   cancelledAt: { type: Date },
+  roomNo: { type: String },
+  roomNoNp: { type: String },
 }, { timestamps: true });
 
 appointmentSchema.index({ organization: 1, branch: 1, date: 1 });

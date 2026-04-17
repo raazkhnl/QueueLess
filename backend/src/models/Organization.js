@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const organizationSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
+  nameNp: { type: String, trim: true },
   slug: { type: String, required: true, unique: true, lowercase: true },
   description: { type: String },
   logo: { type: String },
@@ -9,6 +10,7 @@ const organizationSchema = new mongoose.Schema({
   email: { type: String },
   phone: { type: String },
   address: { type: String },
+  addressNp: { type: String },
   category: { type: String, enum: ['government', 'healthcare', 'education', 'finance', 'salon', 'legal', 'other'], default: 'other' },
   branding: {
     primaryColor: { type: String, default: '#2563eb' },

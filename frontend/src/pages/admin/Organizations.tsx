@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import SearchBar from '../../components/ui/SearchBar';
 import EmptyState from '../../components/ui/EmptyState';
 
-const emptyOrg = { name:'', slug:'', description:'', email:'', phone:'', address:'', category:'other',
+const emptyOrg = { name:'', nameNp:'', slug:'', description:'', email:'', phone:'', address:'', addressNp:'', category:'other',
   branding:{ primaryColor:'#2563eb', secondaryColor:'#1e40af', accentColor:'#f59e0b', fontFamily:'Inter' },
   settings:{ allowGuestBooking:true, requireApproval:false, maxAdvanceBookingDays:30, minAdvanceBookingHours:1, cancellationPolicyHours:24, timezone:'Asia/Kathmandu', currency:'NPR', smsEnabled:false, emailEnabled:true, reminderHoursBefore:24 }
 };
@@ -23,7 +23,7 @@ export default function Organizations() {
   useEffect(fetch, []);
 
   const openNew = () => { setForm({...emptyOrg}); setEditing(null); setModal(true); };
-  const openEdit = (o: any) => { setForm({ name:o.name, slug:o.slug, description:o.description||'', email:o.email||'', phone:o.phone||'', address:o.address||'', category:o.category, branding:{...o.branding}, settings:{...o.settings} }); setEditing(o); setModal(true); };
+  const openEdit = (o: any) => { setForm({ name:o.name, nameNp:o.nameNp||'', slug:o.slug, description:o.description||'', email:o.email||'', phone:o.phone||'', address:o.address||'', addressNp:o.addressNp||'', category:o.category, branding:{...o.branding}, settings:{...o.settings} }); setEditing(o); setModal(true); };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +87,10 @@ export default function Organizations() {
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (English) *</label>
                 <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="input-field" required/></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name (Nepali)</label>
+                <input value={form.nameNp} onChange={e=>setForm({...form,nameNp:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Slug</label>
                 <input value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} className="input-field" placeholder="auto-generated"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
@@ -99,8 +101,10 @@ export default function Organizations() {
                 <input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} className="input-field"/></div>
                 <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
                 <input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="input-field"/></div>
-                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address (English)</label>
                 <input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="input-field"/></div>
+                <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address (Nepali)</label>
+                <input value={form.addressNp} onChange={e=>setForm({...form,addressNp:e.target.value})} className="input-field"/></div>
               </div>
               <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} className="input-field" rows={2}/></div>
