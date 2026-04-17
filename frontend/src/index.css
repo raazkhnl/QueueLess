@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+    --color-primary: #2563eb;
+  }
+  .dark {
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-border: #334155;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body { @apply bg-slate-50 text-slate-900 font-sans dark:bg-slate-900 dark:text-slate-100; }
+  h1,h2,h3,h4 { @apply font-display; }
+}
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm shadow-primary-600/20; }
+  .btn-secondary { @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700; }
+  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500; }
+  .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100 focus:ring-slate-300 dark:text-slate-300 dark:hover:bg-slate-800; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-lg { @apply px-6 py-3 text-base; }
+  .input-field { @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500; }
+  .card { @apply bg-white rounded-xl border border-slate-200/80 shadow-sm dark:bg-slate-800 dark:border-slate-700; }
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+  .badge-success { @apply badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10 dark:bg-emerald-900/30 dark:text-emerald-400; }
+  .badge-warning { @apply badge bg-amber-50 text-amber-700 ring-1 ring-amber-600/10 dark:bg-amber-900/30 dark:text-amber-400; }
+  .badge-danger { @apply badge bg-red-50 text-red-700 ring-1 ring-red-600/10 dark:bg-red-900/30 dark:text-red-400; }
+  .badge-info { @apply badge bg-blue-50 text-blue-700 ring-1 ring-blue-600/10 dark:bg-blue-900/30 dark:text-blue-400; }
+  .badge-neutral { @apply badge bg-slate-100 text-slate-600 ring-1 ring-slate-500/10 dark:bg-slate-700 dark:text-slate-300; }
+}
+
+.slot-available { @apply border-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 cursor-pointer transition-all dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400; }
+.slot-unavailable { @apply border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed line-through dark:bg-slate-800 dark:border-slate-700; }
+.slot-selected { @apply border-2 border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-500/30 dark:bg-primary-900/30 dark:text-primary-400; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full dark:bg-slate-600; }
+
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes slideUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+/* Accessibility */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.focus-visible:focus { @apply outline-2 outline-offset-2 outline-primary-500; }
+*:focus-visible { @apply outline-2 outline-offset-2 outline-primary-500; }
+[role="button"]:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-500;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-slide-up { animation: none !important; }
+  .animate-spin { animation-duration: 2s !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
