@@ -247,3 +247,36 @@ frontend/src/
 ├── store/     (2)  auth, theme
 └── types/          TypeScript interfaces
 ```
+
+## External Systems Integration (e.g., IRD Integration)
+
+QueueLess acts as an omni-channel central appointment hub built specifically for integrating easily with massive governmental portals, strictly enabling fluent, closed-loop communications.
+
+### 1. Booking Redirect (Frontend Intercept)
+External systems can redirect users needing office visits to the QueueLess `/book` sub-route holding specific parameters context.
+
+**Crafting the Portal URL Redirect:**
+```text
+https://queueless.gov.np/book?orgCode=IRD
+    &offcode=KTM-12
+    &serviceTypeCode=TAX_CLEAR
+    &submissionNo=TAX-2026-X8FA
+    &sourceSystem=IRD-TAX
+    &fullname=Bikash+Thapa
+    &username=9800000000
+    &detail=Requesting+Clearance+Validation
+```
+
+**Parameters Parsed:**
+- `orgCode` & `offcode` & `serviceTypeCode`: Safely triggers the system to auto-bypass the branch & service selection steps.
+- `submissionNo` & `sourceSystem`: Identifiers bound natively to the backend appointment Mongo document.
+- `fullname`, `username` (email/phone), `detail` (notes): Instantly pre-populate on the User Form.
+
+### 2. Auto-Closing the Loop via Webhooks
+Because QueueLess captures the `submissionNo`, IRD developers can instantly know when their citizen finishes their verification office visit.
+
+1. Navigate to **Admin Panel → Webhooks**.
+2. Add a new hook:
+   - Event: `appointment.completed`
+   - URL: `https://api.ird.gov.np/v1/queueless/callback`
+3. QueueLess will POST back a secure JSON payload heavily typed with the original `submissionNo` to IRD upon completion, enabling automatic tax clearance dispatch!

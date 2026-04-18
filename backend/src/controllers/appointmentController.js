@@ -19,6 +19,7 @@ const { generateSlots } = require('../services/slotService');
 const { generateAppointmentPDF } = require('../services/pdfService');
 const { sendEmail, emailTemplates } = require('../services/emailService');
 const { logAction } = require('../utils/auditLog');
+const { triggerWebhooks } = require('../services/webhookService');
 
 exports.getSlots = async (req, res, next) => {
   try {
@@ -34,7 +35,7 @@ exports.getSlots = async (req, res, next) => {
 exports.book = async (req, res, next) => {
   try {
     const { organization, branch, appointmentType, date, startTime, endTime,
-      mode, guestName, guestEmail, guestPhone, notes, customFieldValues } = req.body;
+      mode, guestName, guestEmail, guestPhone, notes, customFieldValues, externalSubmissionNo, sourceSystem } = req.body;
 
     if (!organization || !branch || !appointmentType || !date || !startTime || !endTime) {
       return res.status(400).json({ message: 'Missing required booking fields' });
@@ -68,6 +69,8 @@ exports.book = async (req, res, next) => {
       status: (apptType.requiresApproval || orgDoc?.settings?.requireApproval) ? 'pending' : 'confirmed',
       roomNo: apptType.roomNo,
       roomNoNp: apptType.roomNoNp,
+      externalSubmissionNo,
+      sourceSystem,
     };
 
     // Check if org allows guest booking
@@ -109,6 +112,8 @@ exports.book = async (req, res, next) => {
         await sendEmail({ to: email, subject: template.subject, html: template.html });
       } catch (e) { console.error('Email failed:', e.message); }
     }
+
+    triggerWebhooks(organization, 'appointment.created', populated).catch(() => {});
 
     res.status(201).json({ appointment: populated });
   } catch (error) { next(error); }
@@ -262,6 +267,11 @@ exports.updateStatus = async (req, res, next) => {
       }
     }
 
+    triggerWebhooks(appointment.organization, 'appointment.status_changed', appointment).catch(() => {});
+    if (status === 'completed') triggerWebhooks(appointment.organization, 'appointment.completed', appointment).catch(() => {});
+    if (status === 'cancelled') triggerWebhooks(appointment.organization, 'appointment.cancelled', appointment).catch(() => {});
+    if (status === 'checked_in') triggerWebhooks(appointment.organization, 'appointment.checked_in', appointment).catch(() => {});
+
     res.json({ appointment });
   } catch (error) { next(error); }
 };
@@ -277,6 +287,9 @@ exports.cancel = async (req, res, next) => {
     appointment.cancelledAt = new Date();
     appointment.cancellationReason = req.body.reason || 'Cancelled by user';
     await appointment.save();
+    
+    triggerWebhooks(appointment.organization, 'appointment.cancelled', appointment).catch(() => {});
+    
     res.json({ appointment });
   } catch (error) { next(error); }
 };
@@ -309,6 +322,9 @@ exports.reschedule = async (req, res, next) => {
 
     const populated = await Appointment.findById(appointment._id)
       .populate('branch', 'name').populate('appointmentType', 'name');
+      
+    triggerWebhooks(appointment.organization, 'appointment.rescheduled', populated).catch(() => {});
+
     res.json({ appointment: populated });
   } catch (error) { next(error); }
 };
@@ -365,6 +381,9 @@ exports.shiftAppointment = async (req, res, next) => {
       .populate('branch', 'name address phone')
       .populate('appointmentType', 'name')
       .populate('citizen', 'name email');
+      
+    triggerWebhooks(appointment.organization, 'appointment.rescheduled', populated).catch(() => {});
+
     res.json({ appointment: populated });
   } catch (error) { next(error); }
 };

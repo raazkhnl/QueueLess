@@ -90,8 +90,20 @@ export default function AppointmentDetail() {
 
         <div className="p-6">
           <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
-            <div><p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Reference</p><p className="text-2xl font-bold text-slate-900 font-mono">{apt.refCode}</p></div>
-            <div className="text-right"><p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Token #</p><p className="text-3xl font-extrabold" style={{ color: org?.branding?.accentColor || '#f59e0b' }}>#{apt.tokenNumber}</p></div>
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Reference</p>
+              <p className="text-2xl font-bold text-slate-900 font-mono">{apt.refCode}</p>
+              {apt.externalSubmissionNo && (
+                <div className="mt-2">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">External Submission No.</p>
+                  <p className="text-sm font-semibold text-emerald-600 font-mono bg-emerald-50 inline-block px-2 py-0.5 rounded">{apt.externalSubmissionNo}</p>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Token #</p>
+              <p className="text-3xl font-extrabold" style={{ color: org?.branding?.accentColor || '#f59e0b' }}>#{apt.tokenNumber}</p>
+            </div>
           </div>
 
           <div className="space-y-4">

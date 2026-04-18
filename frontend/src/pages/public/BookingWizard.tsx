@@ -205,6 +205,12 @@ export default function BookingWizard() {
         appointmentType: selectedType._id, date: selectedDate,
         startTime: selectedSlot.startTime, endTime: selectedSlot.endTime, notes: guestInfo.notes,
       };
+      
+      const extSubNo = params.get('submissionNo');
+      const srcSys = params.get('sourceSystem') || params.get('source');
+      if (extSubNo) payload.externalSubmissionNo = extSubNo;
+      if (srcSys) payload.sourceSystem = srcSys;
+
       if (Object.keys(customFields).length > 0) payload.customFieldValues = customFields;
       if (!isAuthenticated) {
         payload.guestName = guestInfo.name;
