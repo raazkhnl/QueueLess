@@ -55,9 +55,9 @@ export default function AppointmentDetail() {
   if (error) return (
     <div className="max-w-lg mx-auto py-20 px-4 text-center">
       <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-      <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white mb-2">Not Found</h1>
+      <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('error.notFound')}</h1>
       <p className="text-slate-500 mb-6">{error}</p>
-      <Link to="/" className="btn-primary">Go Home</Link>
+      <Link to="/" className="btn-primary">{t('booking.backToHome')}</Link>
     </div>
   );
 
@@ -76,32 +76,32 @@ export default function AppointmentDetail() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 animate-fade-in">
-      <Link to="/" className="btn-ghost btn-sm mb-6"><ArrowLeft className="w-4 h-4" />Home</Link>
+      <Link to="/" className="btn-ghost btn-sm mb-6"><ArrowLeft className="w-4 h-4" />{t('nav.back')}</Link>
 
       <div className="card overflow-hidden">
         <div className="p-6 text-center" style={{ background: `linear-gradient(135deg, ${org?.branding?.primaryColor || '#2563eb'}, ${org?.branding?.secondaryColor || '#1e40af'})` }}>
           <p className="text-white/70 text-sm font-medium mb-1">{lang === 'ne' && org?.nameNp ? org.nameNp : org?.name}</p>
-          <h1 className="font-display text-2xl font-bold text-white mb-3">{t('booking.confirmed') || 'Appointment Details'}</h1>
-          <span className={`inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-semibold text-sm capitalize`}>
+          <h1 className="font-display text-2xl font-bold text-white mb-3">{t('admin.bookingDetails')}</h1>
+          <span className={`inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-semibold text-sm`}>
             {apt.status === 'confirmed' ? <CheckCircle2 className="w-5 h-5" /> : apt.status === 'cancelled' ? <XCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            {apt.status.replace('_', ' ')}
+            {t(`status.${apt.status}`)}
           </span>
         </div>
 
         <div className="p-6">
           <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Reference</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">{t('common.reference')}</p>
               <p className="text-2xl font-bold text-slate-900 font-mono">{apt.refCode}</p>
               {apt.externalSubmissionNo && (
                 <div className="mt-2">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">External Submission No.</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">External ID</p>
                   <p className="text-sm font-semibold text-emerald-600 font-mono bg-emerald-50 inline-block px-2 py-0.5 rounded">{apt.externalSubmissionNo}</p>
                 </div>
               )}
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Token #</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">{t('common.token')}</p>
               <p className="text-3xl font-extrabold" style={{ color: org?.branding?.accentColor || '#f59e0b' }}>#{apt.tokenNumber}</p>
             </div>
           </div>
@@ -109,14 +109,14 @@ export default function AppointmentDetail() {
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0"><Calendar className="w-5 h-5 text-blue-600" /></div>
-              <div><p className="text-xs text-slate-500">Date & Time</p>
-                <p className="font-semibold">{formatDate(apt.date, { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</p>
-                <p className="text-sm text-slate-600">{formatTime(apt.startTime)} – {formatTime(apt.endTime)} ({apt.duration} min)</p></div>
+              <div><p className="text-xs text-slate-500">{t('common.date')} & {t('common.time')}</p>
+                <p className="font-semibold">{formatDate(apt.date, { weekday:'long', year:'numeric', month:'long', day:'numeric' }, lang)}</p>
+                <p className="text-sm text-slate-600">{formatTime(apt.startTime, lang)} – {formatTime(apt.endTime, lang)} ({apt.duration} {t('common.min')})</p></div>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: (type?.color || '#2563eb') + '15' }}>
                 <Clock className="w-5 h-5" style={{ color: type?.color }} /></div>
-              <div><p className="text-xs text-slate-500">Service</p><p className="font-semibold">{lang === 'ne' && type?.nameNp ? type.nameNp : type?.name}</p>
+              <div><p className="text-xs text-slate-500">{t('common.service')}</p><p className="font-semibold">{lang === 'ne' && type?.nameNp ? type.nameNp : type?.name}</p>
                 {apt.roomNo && <p className="text-sm font-medium text-emerald-600 mt-1">{lang === 'ne' && apt.roomNoNp ? apt.roomNoNp : apt.roomNo}</p>}
                 {type?.description && <p className="text-sm text-slate-500 mt-0.5">{type.description}</p>}
                 {apt.price > 0 && <p className="text-sm font-medium text-primary-600 mt-1">NPR {apt.price}</p>}</div>
@@ -126,21 +126,21 @@ export default function AppointmentDetail() {
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-slate-500" /></div>
               <div className="flex-1">
-                <p className="text-xs text-slate-500">Location</p>
+                <p className="text-xs text-slate-500">{t('common.location')}</p>
                 <p className="font-semibold">{lang === 'ne' && branch?.nameNp ? branch.nameNp : branch?.name}</p>
                 <p className="text-sm text-slate-500">{lang === 'ne' && branch?.addressNp ? branch.addressNp : branch?.address}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100 transition-colors">
-                    <Navigation className="w-3.5 h-3.5" />Open in Maps
+                    <Navigation className="w-3.5 h-3.5" />{t('booking.openMap')}
                   </a>
                   {branch?.phone && (
                     <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
-                      <Phone className="w-3.5 h-3.5" />Call {branch.phone}
+                      <Phone className="w-3.5 h-3.5" />{t('common.callNow')}
                     </a>
                   )}
                   {branch?.email && (
                     <a href={`mailto:${branch.email}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors">
-                      <Mail className="w-3.5 h-3.5" />Email
+                      <Mail className="w-3.5 h-3.5" />{t('common.sendEmail')}
                     </a>
                   )}
                 </div>
@@ -161,8 +161,8 @@ export default function AppointmentDetail() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mt-8">
-            <button onClick={handleDownloadPDF} className="btn-primary flex-1"><Download className="w-4 h-4" />Download PDF</button>
-            <button onClick={handleExportICal} className="btn-secondary flex-1"><FileDown className="w-4 h-4" />Add to Calendar</button>
+            <button onClick={handleDownloadPDF} className="btn-primary flex-1"><Download className="w-4 h-4" />{t('common.download')} PDF</button>
+            <button onClick={handleExportICal} className="btn-secondary flex-1"><FileDown className="w-4 h-4" />{t('admin.calendar')}</button>
           </div>
 
           {/* Feedback section */}

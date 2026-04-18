@@ -36,14 +36,14 @@ const seed = async () => {
       password: 'Admin@123', role: 'super_admin', isEmailVerified: true
     });
 
-    // Organization 1: IRD Nepal
+    // --- 1. Organization: Inland Revenue Department (Government) ---
     const irdOrg = await Organization.create({
       name: 'Inland Revenue Department', nameNp: 'आन्तरिक राजस्व विभाग', slug: 'ird-nepal',
       description: 'Government tax service department of Nepal',
       category: 'government', email: 'info@ird.gov.np', phone: '01-4415802',
       address: 'Lazimpat, Kathmandu', createdBy: superAdmin._id,
       branding: { primaryColor: '#1e40af', secondaryColor: '#1e3a5f', accentColor: '#dc2626' },
-      settings: { allowGuestBooking: true, requireApproval: false, maxAdvanceBookingDays: 14, cancellationPolicyHours: 2 }
+      settings: { allowGuestBooking: true, requireApproval: false, maxAdvanceBookingDays: 30 }
     });
 
     const irdAdmin = await User.create({
@@ -54,31 +54,16 @@ const seed = async () => {
 
     // IRD Branches
     const branchDataList = [
-      { name: 'Internal Revenue Department Main Office, Lazimpat', nameNp: 'आन्तरिक राजस्व विभाग, लाजिम्पाट', code: 'IRD-10', address: 'Lazimpat, Kathmandu', lat: 27.7285, lng: 85.3239 },
-      { name: 'Inland Revenue Office, Khumaltar, Chitwan', nameNp: 'आ.रा.का. खुमलटार चितवन', code: 'IRD-100', address: 'Bharatpur, Chitwan', lat: 27.6833, lng: 84.4333 },
-      { name: 'Inland Revenue Office, Gangotri', nameNp: 'आ.रा.का. गंगोत्री', code: 'IRD-101', address: 'Gangotri Marg, Biratnagar', lat: 26.4535, lng: 87.2832 },
-      { name: 'Inland Revenue Office, Bardiya', nameNp: 'आ.रा.का. बर्दिया', code: 'IRD-102', address: 'Gulariya, Bardiya', lat: 28.1333, lng: 81.3333 },
-      { name: 'Inland Revenue Office, Jhatti', nameNp: 'आन्तरिक राजस्व कार्यालय, झट्टी', code: 'IRD-103', address: 'Jhatti, Morang', lat: 26.5000, lng: 87.3500 },
-      { name: 'Inland Revenue Office, Kalanki', nameNp: 'आन्तरिक राजस्व कार्यालय, कलंकी', code: 'IRD-104', address: 'Kalanki Chowk, Kathmandu', lat: 27.6931, lng: 85.2902 },
-      { name: 'Inland Revenue Office, Kalimati', nameNp: 'आन्तरिक राजस्व कार्यालय, कालिमाटी', code: 'IRD-105', address: 'Kalimati, Kathmandu', lat: 27.7000, lng: 85.3000 },
-      { name: 'Inland Revenue Office, Kapan', nameNp: 'आन्तरिक राजस्व कार्यालय, कपन', code: 'IRD-106', address: 'Kapan, Kathmandu', lat: 27.7400, lng: 85.3500 },
-      { name: 'Inland Revenue Office, Krishnanagar', nameNp: 'आन्तरिक राजस्व कार्यालय, कृष्णनगर', code: 'IRD-107', address: 'Krishnanagar, Kapilvastu', lat: 27.5200, lng: 83.0500 },
-      { name: 'Inland Revenue Office, Kanchanpur', nameNp: 'आन्तरिक राजस्व कार्यालय, कञ्चनपुर', code: 'IRD-108', address: 'Mahendranagar, Kanchanpur', lat: 28.6890, lng: 80.5560 },
-      { name: 'Inland Revenue Office, Koteshwor', nameNp: 'आन्तरिक राजस्व कार्यालय, कोटेश्वर', code: 'IRD-109', address: 'Koteshwor, Kathmandu', lat: 27.6859, lng: 85.3451 },
-      { name: 'Inland Revenue Office, Chabahil', nameNp: 'आन्तरिक राजस्व कार्यालय, चाबहिल', code: 'IRD-110', address: 'Chabahil, Kathmandu', lat: 27.7176, lng: 85.3440 },
-      { name: 'Inland Revenue Office, Janakpur', nameNp: 'आन्तरिक राजस्व कार्यालय, जनकपुर', code: 'IRD-111', address: 'Ramananda Chowk, Janakpur', lat: 26.7280, lng: 85.9240 },
-      { name: 'Inland Revenue Office, Jumla', nameNp: 'आन्तरिक राजस्व कार्यालय, जुम्ला', code: 'IRD-112', address: 'Khalanga, Jumla', lat: 29.2800, lng: 82.1830 },
-      { name: 'Inland Revenue Office, Tangal', nameNp: 'आन्तरिक राजस्व कार्यालय, टङ्गल', code: 'IRD-113', address: 'Tangal, Kathmandu', lat: 27.7170, lng: 85.3240 },
-      { name: 'Inland Revenue Office, Nagarpalika', nameNp: 'आन्तरिक राजस्व कार्यालय, नगरपालिक', code: 'IRD-114', address: 'Municipal Complex, Bhaktapur', lat: 27.6710, lng: 85.4290 },
-      { name: 'District Treasury Controller Office, Kolenika', nameNp: 'जिल्ला कोष तथा लेखा नियन्त्रण कार्यालय, कोलेनिका', code: 'IRD-1001', address: 'Kolenika, Lalitpur', lat: 27.6500, lng: 85.3200 }
+      { name: 'IRD Main Office, Lazimpat', nameNp: 'आन्तरिक राजस्व विभाग, लाजिम्पाट', code: 'IRD-10', address: 'Lazimpat, Kathmandu', lat: 27.7285, lng: 85.3239 },
+      { name: 'IRO, Khumaltar', nameNp: 'आ.रा.का. खुमलटार', code: 'IRD-100', address: 'Bharatpur, Chitwan', lat: 27.6833, lng: 84.4333 },
+      { name: 'IRO, Kalanki', nameNp: 'आन्तरिक राजस्व कार्यालय, कलंकी', code: 'IRD-104', address: 'Kalanki Chowk, Kathmandu', lat: 27.6931, lng: 85.2902 },
+      { name: 'IRO, Koteshwor', nameNp: 'आन्तरिक राजस्व कार्यालय, कोटेश्वर', code: 'IRD-109', address: 'Koteshwor, Kathmandu', lat: 27.6859, lng: 85.3451 },
     ];
 
     const irdBranches = await Promise.all(branchDataList.map(b => Branch.create({
       organization: irdOrg._id, name: b.name, nameNp: b.nameNp, code: b.code,
-      address: b.address,
-      location: { type: 'Point', coordinates: [b.lng, b.lat] },
-      maxConcurrentBookings: 10,
-      phone: '01-4415802', email: 'hello@ird.gov.np',
+      address: b.address, location: { type: 'Point', coordinates: [b.lng, b.lat] },
+      maxConcurrentBookings: 15,
       workingHours: [
         { day: 0, isOpen: true, openTime: '10:00', closeTime: '15:00' },
         { day: 1, isOpen: true, openTime: '10:00', closeTime: '16:00' },
@@ -87,262 +72,157 @@ const seed = async () => {
         { day: 4, isOpen: true, openTime: '10:00', closeTime: '16:00' },
         { day: 5, isOpen: true, openTime: '10:00', closeTime: '16:00' },
         { day: 6, isOpen: false, openTime: '10:00', closeTime: '13:00' },
-      ],
-      holidays: [
-        { date: new Date('2026-01-01'), name: 'New Year', isRecurring: true },
-        { date: new Date('2026-04-14'), name: 'Nepali New Year' },
       ]
     })));
 
     const irdKtm = irdBranches[0];
-    const irdPkr = irdBranches[1];
-    const irdBrt = irdBranches[2];
+
+    // IRD Service Types
+    const irdPAN = await AppointmentType.create({
+      organization: irdOrg._id, name: 'PAN Registration', nameNp: 'प्यान दर्ता', roomNo: 'Room-102', roomNoNp: 'कोठा-१०२',
+      duration: 30, color: '#2563eb', customFields: [{ name: 'citizenship', label: 'Citizenship No', type: 'text', required: true }]
+    });
+    const irdTax = await AppointmentType.create({
+      organization: irdOrg._id, name: 'Tax Consultation', nameNp: 'कर परामर्श', roomNo: 'Section B', roomNoNp: 'खण्ड ख',
+      duration: 45, color: '#059669'
+    });
 
     // IRD Staff
-    const irdManager = await User.create({
-      name: 'Ram Sharma', email: 'ram@ird.gov.np',
-      password: 'Staff@123', role: 'branch_manager',
+    const irdStaff = await User.create({
+      name: 'Sita Thapa', email: 'sita@ird.gov.np', password: 'Staff@123', role: 'staff',
       organization: irdOrg._id, branch: irdKtm._id, isEmailVerified: true
     });
-    const irdStaff1 = await User.create({
-      name: 'Sita Thapa', email: 'sita@ird.gov.np',
-      password: 'Staff@123', role: 'staff',
-      organization: irdOrg._id, branch: irdKtm._id, isEmailVerified: true
-    });
-    const irdStaff2 = await User.create({
-      name: 'Hari Poudel', email: 'hari@ird.gov.np',
-      password: 'Staff@123', role: 'staff',
-      organization: irdOrg._id, branch: irdKtm._id, isEmailVerified: true
+    await StaffAvailability.create({
+      user: irdStaff._id, branch: irdKtm._id,
+      weeklySchedule: [0,1,2,3,4,5,6].map(d => ({ day:d, isAvailable:d>=1 && d<=5, startTime:'10:00', endTime:'16:00', maxAppointments:10 }))
     });
 
-    irdKtm.managers = [irdManager._id];
-    await irdKtm.save();
-
-    // IRD Appointment Types
-    const irdPAN = await AppointmentType.create({
-      organization: irdOrg._id, name: 'PAN Registration', nameNp: 'प्यान दर्ता',
-      roomNo: 'Room-102', roomNoNp: 'कोठा-१०२',
-      description: 'Register for Permanent Account Number', duration: 30,
-      bufferTime: 5, price: 0, mode: 'in_person', color: '#2563eb', icon: 'file-text',
-      customFields: [
-        { name: 'citizenship_no', label: 'Citizenship Number', type: 'text', required: true },
-        { name: 'business_type', label: 'Business Type', type: 'select', required: true, options: ['Individual', 'Sole Proprietor', 'Partnership', 'Company'] },
-      ],
-      sortOrder: 1
-    });
-
-    const irdTax = await AppointmentType.create({
-      organization: irdOrg._id, name: 'Tax Filing Consultation', nameNp: 'कर दाखिला परामर्श',
-      roomNo: 'Section B', roomNoNp: 'खण्ड ख',
-      description: 'Consult with tax officer for filing support', duration: 45,
-      bufferTime: 10, price: 0, mode: 'both', color: '#059669', icon: 'calculator',
-      sortOrder: 2
-    });
-
-    const irdClearance = await AppointmentType.create({
-      organization: irdOrg._id, name: 'Tax Clearance Certificate', nameNp: 'कर चुक्ता प्रमाणपत्र',
-      roomNo: 'Room-101 Service Section', roomNoNp: 'कोठा-१०१ सेवा खण्ड',
-      description: 'Apply for tax clearance certificate', duration: 20,
-      bufferTime: 5, price: 500, mode: 'in_person', color: '#d97706', icon: 'award',
-      customFields: [
-        { name: 'pan_number', label: 'PAN Number', type: 'text', required: true },
-        { name: 'fiscal_year', label: 'Fiscal Year', type: 'select', required: true, options: ['2081/82', '2082/83', '2083/84'] },
-      ],
-      sortOrder: 3
-    });
-
-    // Organization 2: Health Clinic
+    // --- 2. Organization: Kathmandu Medical Center (Healthcare) ---
     const clinicOrg = await Organization.create({
-      name: 'Kathmandu Medical Center', slug: 'kathmandu-medical',
-      description: 'Multi-specialty medical center', category: 'healthcare',
-      email: 'info@ktmmedical.com', phone: '01-5550001',
+      name: 'Kathmandu Medical Center', nameNp: 'काठमाडौं मेडिकल सेन्टर', slug: 'kmc-health',
+      description: 'Multi-specialty private hospital', category: 'healthcare',
       address: 'New Baneshwor, Kathmandu', createdBy: superAdmin._id,
-      branding: { primaryColor: '#059669', secondaryColor: '#047857', accentColor: '#0ea5e9' },
-      settings: { allowGuestBooking: true, requireApproval: false, maxAdvanceBookingDays: 60, reminderHoursBefore: 12 }
-    });
-
-    const clinicAdmin = await User.create({
-      name: 'Dr. Anita KC', email: 'admin@ktmmedical.com',
-      password: 'Admin@123', role: 'org_admin',
-      organization: clinicOrg._id, isEmailVerified: true
+      branding: { primaryColor: '#059669', secondaryColor: '#047857', accentColor: '#0ea5e9' }
     });
 
     const clinicBranch = await Branch.create({
-      organization: clinicOrg._id, name: 'Main Hospital', code: 'KMC-MAIN',
-      address: 'New Baneshwor, Kathmandu', province: 'Bagmati', district: 'Kathmandu', city: 'Kathmandu',
-      location: { type: 'Point', coordinates: [85.3419, 27.6915] },
-      maxConcurrentBookings: 8,
+      organization: clinicOrg._id, name: 'Main Hospital', nameNp: 'मुख्य अस्पताल', code: 'KMC-MAIN',
+      address: 'Baneshwor, KTM', location: { type: 'Point', coordinates: [85.3419, 27.6915] },
+      maxConcurrentBookings: 10
     });
 
-    const clinicBranch2 = await Branch.create({
-      organization: clinicOrg._id, name: 'Lalitpur Clinic', code: 'KMC-LAL',
-      address: 'Pulchowk, Lalitpur', province: 'Bagmati', district: 'Lalitpur', city: 'Lalitpur',
-      location: { type: 'Point', coordinates: [85.3188, 27.6784] },
-      maxConcurrentBookings: 4,
+    const clinicStaff = await User.create({
+      name: 'Dr. Anita KC', email: 'anita@kmc.com', password: 'Staff@123', role: 'staff',
+      organization: clinicOrg._id, branch: clinicBranch._id, isEmailVerified: true
+    });
+    await StaffAvailability.create({
+      user: clinicStaff._id, branch: clinicBranch._id,
+      weeklySchedule: [0,1,2,3,4,5,6].map(d => ({ day:d, isAvailable:d!==6, startTime:'09:00', endTime:'17:00', maxAppointments:20 }))
     });
 
-    await AppointmentType.create({
-      organization: clinicOrg._id, name: 'General Consultation',
-      description: 'General physician consultation', duration: 15,
-      bufferTime: 5, price: 500, mode: 'both', color: '#059669', icon: 'stethoscope',
-      sortOrder: 1
-    });
-    await AppointmentType.create({
-      organization: clinicOrg._id, name: 'Dental Check-up',
-      description: 'Routine dental examination', duration: 30,
-      bufferTime: 10, price: 1000, mode: 'in_person', color: '#0ea5e9', icon: 'smile',
-      sortOrder: 2
-    });
-    await AppointmentType.create({
-      organization: clinicOrg._id, name: 'Eye Examination',
-      description: 'Comprehensive eye exam', duration: 25,
-      bufferTime: 5, price: 800, mode: 'in_person', color: '#8b5cf6', icon: 'eye',
-      sortOrder: 3
+    const dentalType = await AppointmentType.create({
+      organization: clinicOrg._id, name: 'Dental Check-up', nameNp: 'दाँत जाँच',
+      duration: 30, price: 1000, color: '#0ea5e9'
     });
 
-    // Organization 3: Salon
-    const salonOrg = await Organization.create({
-      name: 'Glamour Studio', slug: 'glamour-studio',
-      description: 'Premium beauty and wellness salon', category: 'salon',
-      email: 'hello@glamourstudio.np', phone: '01-5443322',
-      address: 'Thamel, Kathmandu', createdBy: superAdmin._id,
-      branding: { primaryColor: '#be185d', secondaryColor: '#9d174d', accentColor: '#f59e0b' },
-      settings: { allowGuestBooking: true, maxAdvanceBookingDays: 30 }
+    // --- 3. Organization: Everest Bank (Finance) ---
+    const bankOrg = await Organization.create({
+      name: 'Everest Bank', nameNp: 'एभरेष्ट बैंक', slug: 'everest-bank',
+      description: 'Leading commercial bank in Nepal', category: 'finance',
+      address: 'Lazimpat, Kathmandu', createdBy: superAdmin._id,
+      branding: { primaryColor: '#dc2626', secondaryColor: '#991b1b', accentColor: '#fcd34d' }
     });
 
-    await Branch.create({
-      organization: salonOrg._id, name: 'Thamel Studio', code: 'GS-THM',
-      address: 'Thamel, Kathmandu', province: 'Bagmati', district: 'Kathmandu', city: 'Kathmandu',
-      location: { type: 'Point', coordinates: [85.3103, 27.7150] },
-      maxConcurrentBookings: 3,
+    const bankBranch = await Branch.create({
+      organization: bankOrg._id, name: 'Lazimpat Branch', nameNp: 'लाजिम्पाट शाखा', code: 'EBL-LAZ',
+      address: 'Lazimpat, KTM', location: { type: 'Point', coordinates: [85.3235, 27.7280] },
+      maxConcurrentBookings: 5
     });
 
-    await AppointmentType.create({
-      organization: salonOrg._id, name: 'Haircut & Styling',
-      duration: 45, bufferTime: 10, price: 1500, mode: 'in_person', color: '#be185d', sortOrder: 1
-    });
-    await AppointmentType.create({
-      organization: salonOrg._id, name: 'Facial Treatment',
-      duration: 60, bufferTime: 15, price: 2500, mode: 'in_person', color: '#f59e0b', sortOrder: 2
+    const loanType = await AppointmentType.create({
+      organization: bankOrg._id, name: 'Home Loan Consultation', nameNp: 'घर कर्जा परामर्श',
+      duration: 60, color: '#dc2626'
     });
 
-    // Citizen users
-    const citizen1 = await User.create({
+    // --- 4. Generating Historical & Future Appointments (The "Robust" Part) ---
+    console.log('Generating historical appointments for analytics...');
+    const citizen = await User.create({
       name: 'Bikash Tamang', email: 'bikash@gmail.com', phone: '9841000001',
       password: 'User@123', role: 'citizen', isEmailVerified: true
     });
-    const citizen2 = await User.create({
-      name: 'Priya Magar', email: 'priya@gmail.com', phone: '9841000002',
-      password: 'User@123', role: 'citizen', isEmailVerified: true
-    });
 
-    // Sample Appointments
-    const today = new Date(); today.setHours(0,0,0,0);
-    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
-    const nextWeek = new Date(today); nextWeek.setDate(nextWeek.getDate() + 7);
+    const statuses = ['completed', 'cancelled', 'no_show', 'checked_in', 'confirmed'];
+    const times = ['10:00', '11:00', '12:00', '14:00', '15:00'];
+    const appointments = [];
 
-    await Appointment.create([
-      {
-        organization: irdOrg._id, branch: irdKtm._id, appointmentType: irdPAN._id,
-        citizen: citizen1._id, date: tomorrow, startTime: '10:00', endTime: '10:30',
-        duration: 30, status: 'confirmed', tokenNumber: 1,
-        customFieldValues: new Map([['citizenship_no', '23-01-76-00001'], ['business_type', 'Individual']])
-      },
-      {
-        organization: irdOrg._id, branch: irdKtm._id, appointmentType: irdTax._id,
-        citizen: citizen2._id, date: tomorrow, startTime: '10:35', endTime: '11:20',
-        duration: 45, status: 'confirmed', tokenNumber: 2, assignedStaff: irdStaff1._id
-      },
-      {
-        organization: irdOrg._id, branch: irdKtm._id, appointmentType: irdClearance._id,
-        guestName: 'Guest User', guestEmail: 'guest@test.com', guestPhone: '9800000001',
-        date: tomorrow, startTime: '11:25', endTime: '11:45', duration: 20,
-        status: 'pending', tokenNumber: 3, isGuest: true, price: 500
-      },
-      {
-        organization: irdOrg._id, branch: irdKtm._id, appointmentType: irdPAN._id,
-        citizen: citizen1._id, date: dayAfter, startTime: '14:00', endTime: '14:30',
-        duration: 30, status: 'confirmed', tokenNumber: 1
-      },
-      {
-        organization: irdOrg._id, branch: irdPkr._id, appointmentType: irdTax._id,
-        guestName: 'Sunil Gurung', guestEmail: 'sunil@test.com',
-        date: nextWeek, startTime: '10:00', endTime: '10:45', duration: 45,
-        status: 'confirmed', tokenNumber: 1, isGuest: true
-      },
-    ]);
+    // Past 30 Days
+    for (let i = 1; i <= 40; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (i % 30));
+        date.setHours(0,0,0,0);
+        
+        const status = i % 10 === 0 ? 'cancelled' : (i % 7 === 0 ? 'no_show' : 'completed');
+        
+        appointments.push({
+            organization: irdOrg._id,
+            branch: irdKtm._id,
+            appointmentType: (i % 2 === 0 ? irdPAN._id : irdTax._id),
+            citizen: citizen._id,
+            date,
+            startTime: times[i % 5],
+            endTime: '11:00', // simplistic
+            duration: 30,
+            status,
+            bookedBy: citizen._id,
+            tokenNumber: (i % 5) + 1,
+            branchCode: irdKtm.code,
+            refCode: `QL-IRD-${Math.random().toString(36).substring(7).toUpperCase()}`,
+            completedAt: status === 'completed' ? date : undefined
+        });
+    }
 
-    // Staff Availability
-    await StaffAvailability.create({
-      user: irdStaff1._id,
-      branch: irdKtm._id,
-      weeklySchedule: [
-        { day: 0, isAvailable: false },
-        { day: 1, isAvailable: true, startTime: '10:00', endTime: '16:00', maxAppointments: 8 },
-        { day: 2, isAvailable: true, startTime: '10:00', endTime: '16:00', maxAppointments: 8 },
-        { day: 3, isAvailable: true, startTime: '10:00', endTime: '16:00', maxAppointments: 8 },
-        { day: 4, isAvailable: true, startTime: '10:00', endTime: '16:00', maxAppointments: 8 },
-        { day: 5, isAvailable: true, startTime: '10:00', endTime: '16:00', maxAppointments: 8 },
-        { day: 6, isAvailable: false },
-      ],
-      dateOverrides: [
-        { date: new Date('2026-05-01'), isAvailable: false, reason: 'Labour Day' },
-      ],
-    });
+    // Upcoming
+    for (let i = 1; i <= 10; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + (i % 7));
+        date.setHours(0,0,0,0);
+        
+        appointments.push({
+            organization: irdOrg._id,
+            branch: irdKtm._id,
+            appointmentType: irdPAN._id,
+            citizen: citizen._id,
+            date,
+            startTime: '10:00',
+            endTime: '10:30',
+            duration: 30,
+            status: 'confirmed',
+            bookedBy: citizen._id,
+            tokenNumber: 1,
+            branchCode: irdKtm.code,
+            refCode: `QL-IRD-FUT${i}`
+        });
+    }
 
-    await StaffAvailability.create({
-      user: irdStaff2._id,
-      branch: irdKtm._id,
-      weeklySchedule: [0,1,2,3,4,5,6].map(d => ({
-        day: d, isAvailable: d >= 1 && d <= 5, startTime: '09:00', endTime: '15:00', maxAppointments: 6,
-      })),
-    });
+    await Appointment.insertMany(appointments);
 
-    // AppConfig
+    // --- 5. Global Config & Templates ---
     await AppConfig.create({
-      key: 'global',
-      appName: 'QueueLess',
-      tagline: 'Public Service, Fast Forward',
-      defaultLanguage: 'en',
-      supportedLanguages: ['en', 'ne'],
-      theme: { primaryColor: '#2563eb', secondaryColor: '#1e40af', accentColor: '#f59e0b', darkMode: false },
-      contact: { email: 'support@queueless.app', phone: '+977-1-4000000' },
-      features: { guestBooking: true, feedbackEnabled: true, smsEnabled: false, multiLanguage: true },
+      key: 'global', appName: 'QueueLess', tagline: 'Public Service, Fast Forward',
+      defaultLanguage: 'en', supportedLanguages: ['en', 'ne'],
+      features: { guestBooking: true, feedbackEnabled: true, multiLanguage: true },
     });
 
-    // Sample Webhook
-    await Webhook.create({
-      organization: irdOrg._id,
-      name: 'Sample Webhook (Disabled)',
-      url: 'https://httpbin.org/post',
-      events: ['appointment.created', 'appointment.confirmed', 'appointment.cancelled'],
-      isActive: false,
-    });
-
-    // Sample Notification Templates
     await NotificationTemplate.insertMany([
-      { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'Booking Confirmed - {{refCode}}', bodyTemplate: 'Hello {{name}}, your appointment for {{service}} at {{branch}} on {{date}} at {{time}} is confirmed. Token: #{{token}}.', language: 'en' },
-      { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'बुकिङ पुष्टि - {{refCode}}', bodyTemplate: 'नमस्ते {{name}}, {{branch}} मा {{service}} को लागि {{date}} {{time}} मा तपाईंको अपोइन्टमेन्ट पुष्टि भएको छ। टोकन: #{{token}}।', language: 'ne' },
-      { organization: irdOrg._id, type: 'booking_cancelled', channel: 'email', subject: 'Booking Cancelled - {{refCode}}', bodyTemplate: 'Hello {{name}}, your appointment {{refCode}} has been cancelled.', language: 'en' },
-      { organization: irdOrg._id, type: 'booking_reminder', channel: 'email', subject: 'Reminder: Appointment Tomorrow - {{refCode}}', bodyTemplate: 'Hello {{name}}, reminder: your appointment at {{branch}} for {{service}} is tomorrow at {{time}}.', language: 'en' },
+      { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'Booking Confirmed - {{refCode}}', bodyTemplate: 'Hello {{name}}, your appointment is confirmed for {{date}} at {{time}}.', language: 'en' },
+      { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'बुकिङ पुष्टि - {{refCode}}', bodyTemplate: 'नमस्ते {{name}}, तपाईंको बुकिङ {{date}} {{time}} मा सुनिश्चित भएको छ।', language: 'ne' },
     ]);
 
     console.log('\n=== SEED DATA CREATED ===');
-    console.log('\nLogin Credentials:');
-    console.log('------------------------------------------');
-    console.log('Super Admin:     admin@queueless.app / Admin@123');
-    console.log('IRD Org Admin:   admin@ird.gov.np / Admin@123');
-    console.log('IRD Br Manager:  ram@ird.gov.np / Staff@123');
-    console.log('IRD Staff:       sita@ird.gov.np / Staff@123');
-    console.log('Clinic Admin:    admin@ktmmedical.com / Admin@123');
-    console.log('Citizen 1:       bikash@gmail.com / User@123');
-    console.log('Citizen 2:       priya@gmail.com / User@123');
-    console.log('------------------------------------------');
-    console.log(`\nOrganizations: 3 (IRD, Kathmandu Medical, Glamour Studio)`);
-    console.log(`Branches: 6`);
-    console.log(`Appointment Types: 8`);
-    console.log(`Sample Appointments: 5`);
+    console.log('Historical Data: 40 appointments created for Admin Charts');
+    console.log('Finance Org: Everest Bank added');
+    console.log('Healthcare: Kathmandu Medical Center fully bookable');
+    console.log('Login: admin@queueless.app / Admin@123');
     console.log('=========================\n');
 
     process.exit(0);

@@ -126,7 +126,7 @@ exports.book = async (req, res, next) => {
           refCode: appointment.refCode,
           serviceName: populated.appointmentType.name,
           branchName: populated.branch.name,
-          date: new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          date: new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
           startTime, endTime, tokenNumber: appointment.tokenNumber,
         });
         await sendEmail({ to: email, subject: template.subject, html: template.html });

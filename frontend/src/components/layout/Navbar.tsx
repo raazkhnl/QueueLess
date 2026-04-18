@@ -26,12 +26,12 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center shadow-sm shadow-primary-600/30">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-105 transition-transform">
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-display font-bold text-lg text-slate-900 dark:text-white tracking-tight">{t('app.name')}</span>
-              <span className="hidden sm:block text-[10px] text-slate-400 dark:text-slate-500 -mt-1 font-medium tracking-wider uppercase">{t('app.tagline')}</span>
+              <span className="font-display font-bold text-lg text-slate-900 dark:text-white tracking-tight block">{t('app.name')}</span>
+              <span className="hidden sm:block text-[9px] text-slate-400 dark:text-slate-500 -mt-1 font-bold tracking-[0.15em] uppercase">{t('app.tagline')}</span>
             </div>
           </Link>
 

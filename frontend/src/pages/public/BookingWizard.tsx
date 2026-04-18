@@ -407,8 +407,8 @@ export default function BookingWizard() {
                 <div><span className="text-slate-500">{t('common.branch')}</span><p className="font-medium">{lang === 'ne' && selectedBranch?.nameNp ? selectedBranch.nameNp : selectedBranch?.name}</p></div>
                 <div><span className="text-slate-500">{t('common.service')}</span><p className="font-medium">{lang === 'ne' && selectedType?.nameNp ? selectedType.nameNp : selectedType?.name}</p></div>
                 <div><span className="text-slate-500">{t('common.duration')}</span><p className="font-medium">{selectedType?.duration} {t('common.minutes')}</p></div>
-                <div><span className="text-slate-500">{t('common.date')}</span><p className="font-medium">{formatDate(selectedDate, {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p></div>
-                <div><span className="text-slate-500">{t('common.time')}</span><p className="font-medium">{formatTime(selectedSlot.startTime)} – {formatTime(selectedSlot.endTime)}</p></div>
+                <div><span className="text-slate-500">{t('common.date')}</span><p className="font-medium">{formatDate(selectedDate, {weekday:'long',year:'numeric',month:'long',day:'numeric'}, lang)}</p></div>
+                <div><span className="text-slate-500">{t('common.time')}</span><p className="font-medium">{formatTime(selectedSlot.startTime, lang)} – {formatTime(selectedSlot.endTime, lang)}</p></div>
                 {selectedType?.price > 0 && <div><span className="text-slate-500">{t('common.price')}</span><p className="font-medium text-primary-600">NPR {selectedType.price}</p></div>}
               </div>
             </div>
@@ -514,10 +514,10 @@ export default function BookingWizard() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-slate-500">{t('common.service')}</span><p className="font-medium">{lang === 'ne' && (booking.appointmentType as any)?.nameNp ? (booking.appointmentType as any).nameNp : (booking.appointmentType as any)?.name}</p></div>
-                {booking.roomNo && <div><span className="text-slate-500">Room / Section</span><p className="font-medium text-emerald-600">{lang === 'ne' && booking.roomNoNp ? booking.roomNoNp : booking.roomNo}</p></div>}
+                {booking.roomNo && <div><span className="text-slate-500">{t('booking.roomSection')}</span><p className="font-medium text-emerald-600">{lang === 'ne' && booking.roomNoNp ? booking.roomNoNp : booking.roomNo}</p></div>}
                 <div><span className="text-slate-500">{t('common.branch')}</span><p className="font-medium">{lang === 'ne' && (booking.branch as any)?.nameNp ? (booking.branch as any).nameNp : (booking.branch as any)?.name}</p></div>
-                <div><span className="text-slate-500">{t('common.date')}</span><p className="font-medium">{formatDate(booking.date,{weekday:'long',month:'long',day:'numeric'})}</p></div>
-                <div><span className="text-slate-500">{t('common.time')}</span><p className="font-medium">{formatTime(booking.startTime)} – {formatTime(booking.endTime)}</p></div>
+                <div><span className="text-slate-500">{t('common.date')}</span><p className="font-medium">{formatDate(booking.date,{weekday:'long',month:'long',day:'numeric'}, lang)}</p></div>
+                <div><span className="text-slate-500">{t('common.time')}</span><p className="font-medium">{formatTime(booking.startTime, lang)} – {formatTime(booking.endTime, lang)}</p></div>
                 <div><span className="text-slate-500">{t('common.status')}</span><p className="badge-success inline-block mt-1 capitalize">{booking.status}</p></div>
               </div>
 
