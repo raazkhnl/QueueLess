@@ -24,7 +24,8 @@ exports.getAll = async (req, res, next) => {
       .populate('organization', 'name slug')
       .sort({ name: 1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await Branch.countDocuments(query);
 
     res.json({ branches, total, page: parseInt(page), pages: Math.ceil(total / limit) });
@@ -36,7 +37,8 @@ exports.getPublicByOrg = async (req, res, next) => {
   try {
     const branches = await Branch.find({ organization: req.params.orgId, isActive: true })
       .select('name nameNp code address addressNp province district city location workingHours holidays phone email maxConcurrentBookings')
-      .sort({ name: 1 });
+      .sort({ name: 1 })
+      .lean();
     res.json({ branches });
   } catch (error) { next(error); }
 };
@@ -60,7 +62,8 @@ exports.findNearest = async (req, res, next) => {
 
     const branches = await Branch.find(query)
       .populate('organization', 'name slug')
-      .limit(10);
+      .limit(10)
+      .lean();
 
     // Calculate distance
     const branchesWithDistance = branches.map(b => {

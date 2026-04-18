@@ -34,8 +34,8 @@ const organizationSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
-organizationSchema.pre('save', function(next) {
-  if (!this.slug) {
+organizationSchema.pre('validate', function(next) {
+  if (!this.slug && this.name) {
     this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
   next();

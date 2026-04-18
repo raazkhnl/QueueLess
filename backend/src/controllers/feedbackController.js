@@ -29,7 +29,8 @@ exports.getByAppointment = async (req, res, next) => {
   try {
     const feedback = await Feedback.findOne({ appointment: req.params.appointmentId })
       .populate('citizen', 'name')
-      .populate('adminRepliedBy', 'name');
+      .populate('adminRepliedBy', 'name')
+      .lean();
     res.json({ feedback });
   } catch (error) { next(error); }
 };
@@ -47,7 +48,8 @@ exports.getByOrg = async (req, res, next) => {
       .populate('appointment', 'refCode appointmentType date')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await Feedback.countDocuments(query);
 
     // Aggregate stats

@@ -23,7 +23,8 @@ exports.getAll = async (req, res, next) => {
     const orgs = await Organization.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await Organization.countDocuments(query);
 
     res.json({ organizations: orgs, total, page: parseInt(page), pages: Math.ceil(total / limit) });
@@ -35,7 +36,8 @@ exports.getPublicList = async (req, res, next) => {
   try {
     const orgs = await Organization.find({ isActive: true })
       .select('name nameNp slug description logo category branding')
-      .sort({ name: 1 });
+      .sort({ name: 1 })
+      .lean();
     res.json({ organizations: orgs });
   } catch (error) { next(error); }
 };

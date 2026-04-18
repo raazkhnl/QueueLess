@@ -49,6 +49,7 @@ const appointmentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 appointmentSchema.index({ organization: 1, branch: 1, date: 1 });
+appointmentSchema.index({ branch: 1, date: 1 }); // Essential for performant token number generation
 appointmentSchema.index({ citizen: 1, date: 1 });
 appointmentSchema.index({ assignedStaff: 1, date: 1 });
 appointmentSchema.index({ status: 1 });

@@ -13,7 +13,8 @@ exports.getAll = async (req, res, next) => {
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await Notification.countDocuments(query);
 
     res.json({ notifications, total, page: parseInt(page), pages: Math.ceil(total / limit) });

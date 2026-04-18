@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: queueless-mongo-prod
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=queueless
+    volumes:
+      - mongo_prod_data:/data/db
+    networks:
+      - queueless-prod
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: queueless-api-prod
+    restart: unless-stopped
+    expose:
+      - "5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/queueless
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+    networks:
+      - queueless-prod
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: queueless-web-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - backend
+    networks:
+      - queueless-prod
+
+networks:
+  queueless-prod:
+    driver: bridge
+
+volumes:
+  mongo_prod_data:
+  certbot-conf:
+  certbot-www:

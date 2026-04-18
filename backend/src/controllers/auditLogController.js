@@ -12,7 +12,8 @@ exports.getAll = async (req, res, next) => {
       .populate('user', 'name email role')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await AuditLog.countDocuments(query);
 
     res.json({ logs, total, page: parseInt(page), pages: Math.ceil(total / limit) });

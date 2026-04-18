@@ -179,7 +179,8 @@ exports.getAll = async (req, res, next) => {
       .populate('assignedStaff', 'name email')
       .sort({ date: -1, startTime: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     const total = await Appointment.countDocuments(query);
 
     res.json({ appointments, total, page: parseInt(page), pages: Math.ceil(total / limit) });
@@ -208,7 +209,8 @@ exports.getMyByContact = async (req, res, next) => {
       .populate('branch', 'name address phone')
       .populate('appointmentType', 'name color duration price')
       .sort({ date: -1 })
-      .limit(50);
+      .limit(50)
+      .lean();
 
     res.json({ appointments });
   } catch (error) { next(error); }

@@ -12,6 +12,7 @@ const logger = require('./config/logger');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+app.set('trust proxy', 1); // Trust reverse proxies (e.g. Nginx, Docker) for accurate rate limiting IPs.
 
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
