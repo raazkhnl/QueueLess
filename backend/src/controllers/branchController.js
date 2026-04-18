@@ -135,3 +135,18 @@ exports.updateWorkingHours = async (req, res, next) => {
     res.json({ branch });
   } catch (error) { next(error); }
 };
+
+// Resolve branch by org slug + branch code (for external integration)
+exports.getByCode = async (req, res, next) => {
+  try {
+    const { orgSlug, code } = req.params;
+    const Organization = require('../models/Organization');
+    const org = await Organization.findOne({ slug: orgSlug, isActive: true });
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const branch = await Branch.findOne({ organization: org._id, code: code.toUpperCase(), isActive: true })
+      .populate('organization', 'name slug');
+    if (!branch) return res.status(404).json({ message: 'Branch not found' });
+    res.json({ branch });
+  } catch (error) { next(error); }
+};

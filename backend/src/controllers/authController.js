@@ -162,3 +162,59 @@ exports.changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+// Forgot password — sends OTP to email
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists or not (security)
+      return res.json({ message: 'If an account exists with this email, a reset code has been sent' });
+    }
+
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    const template = emailTemplates.passwordReset({ name: user.name, otp });
+    await sendEmail({ to: email, subject: template.subject, html: template.html });
+
+    res.json({
+      message: 'If an account exists with this email, a reset code has been sent',
+      ...(process.env.NODE_ENV === 'development' && { otp }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reset password using OTP
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Email, OTP, and new password are required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    if (!user.otpExpiry || user.otpExpiry < new Date()) {
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    user.password = newPassword;
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+    await user.save();
+
+    const token = generateToken(user);
+    res.json({ message: 'Password reset successfully', token, user });
+  } catch (error) {
+    next(error);
+  }
+};

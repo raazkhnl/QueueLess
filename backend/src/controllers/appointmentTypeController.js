@@ -78,3 +78,13 @@ exports.toggleSuspend = async (req, res, next) => {
     res.json({ appointmentType: t, message: suspend ? 'Service suspended' : 'Service activated' });
   } catch (error) { next(error); }
 };
+
+// Resolve appointment type by slug (for external integration)
+exports.getBySlug = async (req, res, next) => {
+  try {
+    const t = await AppointmentType.findOne({ slug: req.params.slug, isActive: true })
+      .populate('branches', 'name code');
+    if (!t) return res.status(404).json({ message: 'Appointment type not found' });
+    res.json({ appointmentType: t });
+  } catch (error) { next(error); }
+};

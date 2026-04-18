@@ -4,7 +4,8 @@ const notificationTemplateSchema = new mongoose.Schema({
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
   type: { type: String, required: true, enum: [
     'booking_confirmed', 'booking_cancelled', 'booking_reminder',
-    'booking_rescheduled', 'otp', 'welcome', 'feedback_request'
+    'booking_rescheduled', 'otp', 'welcome', 'feedback_request',
+    'password_reset', 'status_changed'
   ]},
   channel: { type: String, enum: ['email', 'sms'], default: 'email' },
   subject: { type: String, required: true },

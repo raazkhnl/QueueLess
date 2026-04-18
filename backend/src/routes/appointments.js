@@ -18,6 +18,7 @@ router.put('/:id/shift', authenticate, authorize('super_admin','org_admin','bran
 router.post('/bulk-shift', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.bulkShift);
 router.post('/bulk-cancel', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.bulkCancel);
 router.post('/bulk-reschedule', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.bulkReschedule);
+router.post('/bulk-status', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.bulkStatusUpdate);
 router.get('/:id/pdf', ctrl.downloadPDF);
 router.get('/:id/ical', ctrl.exportICal);
 

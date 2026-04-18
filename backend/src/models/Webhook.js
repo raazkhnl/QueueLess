@@ -8,12 +8,14 @@ const webhookSchema = new mongoose.Schema({
   events: [{ type: String, enum: [
     'appointment.created', 'appointment.confirmed', 'appointment.cancelled',
     'appointment.completed', 'appointment.rescheduled', 'appointment.checked_in',
-    'feedback.created', 'user.created'
+    'appointment.status_changed', 'appointment.no_show',
+    'feedback.created', 'user.created', 'test'
   ]}],
   isActive: { type: Boolean, default: true },
   lastTriggered: { type: Date },
   lastStatus: { type: Number },
   failCount: { type: Number, default: 0 },
+  maxRetries: { type: Number, default: 10 },
   headers: { type: Map, of: String },
 }, { timestamps: true });
 

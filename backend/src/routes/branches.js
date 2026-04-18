@@ -3,6 +3,7 @@ const ctrl = require('../controllers/branchController');
 const { authenticate, authorize } = require('../middleware/auth');
 
 router.get('/public/org/:orgId', ctrl.getPublicByOrg);
+router.get('/code/:orgSlug/:code', ctrl.getByCode);
 router.get('/nearest', ctrl.findNearest);
 router.get('/', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.getAll);
 router.post('/', authenticate, authorize('super_admin','org_admin'), ctrl.create);

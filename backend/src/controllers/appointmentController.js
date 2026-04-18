@@ -48,6 +48,26 @@ exports.book = async (req, res, next) => {
       return res.status(400).json({ message: 'Cannot book appointments in the past' });
     }
 
+    // Idempotency: prevent duplicate booking within 30s for same user+branch+slot
+    const idempotencyWindow = new Date(Date.now() - 30 * 1000);
+    const citizenId = req.user?._id;
+    const dupeQuery = {
+      branch, appointmentType, date: new Date(date), startTime,
+      createdAt: { $gte: idempotencyWindow },
+      status: { $nin: ['cancelled'] },
+    };
+    if (citizenId) dupeQuery.citizen = citizenId;
+    else if (guestEmail) dupeQuery.guestEmail = guestEmail;
+    else if (guestPhone) dupeQuery.guestPhone = guestPhone;
+    const duplicate = await Appointment.findOne(dupeQuery);
+    if (duplicate) {
+      const populated = await Appointment.findById(duplicate._id)
+        .populate('branch', 'name address location phone email')
+        .populate('appointmentType', 'name duration')
+        .populate('organization', 'name email phone');
+      return res.status(200).json({ appointment: populated, deduplicated: true });
+    }
+
     const slots = await generateSlots({ branchId: branch, appointmentTypeId: appointmentType, date });
     const slot = slots.find(s => s.startTime === startTime);
     if (!slot || !slot.available) {
@@ -361,13 +381,14 @@ exports.shiftAppointment = async (req, res, next) => {
 
     logAction(req, { action: 'reschedule', resource: 'appointment', resourceId: appointment._id, details: `Shifted ${shiftDays} days from ${oldDate}`, metadata: { shiftDays, reason } });
 
-    // Notify citizen
-    const email = appointment.guestEmail;
+    // Notify citizen (guest OR registered user)
+    const apt = await Appointment.findById(appointment._id)
+      .populate('appointmentType', 'name').populate('branch', 'name').populate('citizen', 'name email');
+    const email = apt.citizen?.email || appointment.guestEmail;
     if (email) {
       try {
-        const apt = await Appointment.findById(appointment._id).populate('appointmentType', 'name').populate('branch', 'name');
         const template = emailTemplates.bookingConfirmed({
-          name: appointment.guestName || 'User',
+          name: apt.citizen?.name || appointment.guestName || 'User',
           refCode: appointment.refCode, serviceName: apt.appointmentType?.name || '',
           branchName: apt.branch?.name || '', date: newDate.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }),
           startTime: appointment.startTime, endTime: appointment.endTime, tokenNumber: appointment.tokenNumber,
@@ -437,12 +458,12 @@ exports.bulkCancel = async (req, res, next) => {
         await apt.save();
         cancelled++;
         
-        // Non-blocking email notification
-        const email = apt.guestEmail;
+        // Non-blocking email notification (guest OR registered user)
+        const populated = await Appointment.findById(id).populate('appointmentType', 'name').populate('citizen', 'name email');
+        const email = populated?.citizen?.email || apt.guestEmail;
         if (email) {
-          const populated = await Appointment.findById(id).populate('appointmentType', 'name');
           const template = emailTemplates.bookingCancelled({
-            name: apt.guestName || 'User', refCode: apt.refCode,
+            name: populated?.citizen?.name || apt.guestName || 'User', refCode: apt.refCode,
             serviceName: populated?.appointmentType?.name || '', date: new Date(apt.date).toLocaleDateString(),
             startTime: apt.startTime, reason: reason || 'Cancelled by admin',
           });
@@ -475,12 +496,12 @@ exports.bulkReschedule = async (req, res, next) => {
         await apt.save();
         shifted++;
         
-        // Non-blocking notification
-        const email = apt.guestEmail;
+        // Non-blocking notification (guest OR registered user)
+        const populated = await Appointment.findById(id).populate('appointmentType', 'name').populate('branch', 'name').populate('citizen', 'name email');
+        const email = populated?.citizen?.email || apt.guestEmail;
         if (email) {
-          const populated = await Appointment.findById(id).populate('appointmentType', 'name').populate('branch', 'name');
           const template = emailTemplates.bookingConfirmed({
-            name: apt.guestName || 'User', refCode: apt.refCode,
+            name: populated?.citizen?.name || apt.guestName || 'User', refCode: apt.refCode,
             serviceName: populated?.appointmentType?.name || '', branchName: populated?.branch?.name || '',
             date: newDate.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }),
             startTime: apt.startTime, endTime: apt.endTime, tokenNumber: apt.tokenNumber,
@@ -614,5 +635,35 @@ exports.getAnalytics = async (req, res, next) => {
       revenueData,
       avgWaitTime: avgWaitTime[0]?.avgWait || 0,
     });
+  } catch (error) { next(error); }
+};
+
+// Bulk status update (admin)
+exports.bulkStatusUpdate = async (req, res, next) => {
+  try {
+    const { appointmentIds, status, reason } = req.body;
+    if (!appointmentIds?.length || !status) {
+      return res.status(400).json({ message: 'appointmentIds and status required' });
+    }
+
+    let updated = 0, failed = 0;
+    for (const id of appointmentIds) {
+      try {
+        const apt = await Appointment.findById(id);
+        if (!apt) { failed++; continue; }
+        const allowed = VALID_TRANSITIONS[apt.status] || [];
+        if (!allowed.includes(status)) { failed++; continue; }
+
+        apt.status = status;
+        if (status === 'cancelled') { apt.cancelledAt = new Date(); apt.cancellationReason = reason || 'Bulk status update'; }
+        if (status === 'checked_in') apt.checkedInAt = new Date();
+        if (status === 'completed') apt.completedAt = new Date();
+        await apt.save();
+        updated++;
+      } catch { failed++; }
+    }
+
+    logAction(req, { action: 'status_change', resource: 'appointment', details: `Bulk status → ${status}: ${updated} updated`, metadata: { status, updated, failed, reason } });
+    res.json({ message: `Updated ${updated}, failed ${failed}`, updated, failed });
   } catch (error) { next(error); }
 };

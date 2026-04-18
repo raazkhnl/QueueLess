@@ -17,22 +17,33 @@ api.interceptors.response.use((res) => res, (err) => {
 });
 
 export const authAPI = {
-  register: (d: any) => api.post('/auth/register', d), login: (d: any) => api.post('/auth/login', d),
-  requestOTP: (d: any) => api.post('/auth/otp/request', d), verifyOTP: (d: any) => api.post('/auth/otp/verify', d),
-  getMe: () => api.get('/auth/me'), updateProfile: (d: any) => api.put('/auth/profile', d),
+  register: (d: any) => api.post('/auth/register', d),
+  login: (d: any) => api.post('/auth/login', d),
+  requestOTP: (d: any) => api.post('/auth/otp/request', d),
+  verifyOTP: (d: any) => api.post('/auth/otp/verify', d),
+  forgotPassword: (d: any) => api.post('/auth/forgot-password', d),
+  resetPassword: (d: any) => api.post('/auth/reset-password', d),
+  getMe: () => api.get('/auth/me'),
+  updateProfile: (d: any) => api.put('/auth/profile', d),
   changePassword: (d: any) => api.put('/auth/change-password', d),
 };
 export const orgAPI = {
-  getPublic: () => api.get('/organizations/public'), getBySlug: (s: string) => api.get(`/organizations/slug/${s}`),
-  getAll: (p?: any) => api.get('/organizations', { params: p }), getById: (id: string) => api.get(`/organizations/${id}`),
-  create: (d: any) => api.post('/organizations', d), update: (id: string, d: any) => api.put(`/organizations/${id}`, d),
+  getPublic: () => api.get('/organizations/public'),
+  getBySlug: (s: string) => api.get(`/organizations/slug/${s}`),
+  getAll: (p?: any) => api.get('/organizations', { params: p }),
+  getById: (id: string) => api.get(`/organizations/${id}`),
+  create: (d: any) => api.post('/organizations', d),
+  update: (id: string, d: any) => api.put(`/organizations/${id}`, d),
   remove: (id: string) => api.delete(`/organizations/${id}`),
 };
 export const branchAPI = {
   getPublicByOrg: (orgId: string) => api.get(`/branches/public/org/${orgId}`),
+  getByCode: (orgSlug: string, code: string) => api.get(`/branches/code/${orgSlug}/${code}`),
   findNearest: (p: any) => api.get('/branches/nearest', { params: p }),
-  getAll: (p?: any) => api.get('/branches', { params: p }), getById: (id: string) => api.get(`/branches/${id}`),
-  create: (d: any) => api.post('/branches', d), update: (id: string, d: any) => api.put(`/branches/${id}`, d),
+  getAll: (p?: any) => api.get('/branches', { params: p }),
+  getById: (id: string) => api.get(`/branches/${id}`),
+  create: (d: any) => api.post('/branches', d),
+  update: (id: string, d: any) => api.put(`/branches/${id}`, d),
   remove: (id: string) => api.delete(`/branches/${id}`),
   addHoliday: (id: string, d: any) => api.post(`/branches/${id}/holidays`, d),
   removeHoliday: (id: string, date: string) => api.delete(`/branches/${id}/holidays/${date}`),
@@ -40,9 +51,13 @@ export const branchAPI = {
 };
 export const apptTypeAPI = {
   getPublicByOrg: (orgId: string, p?: any) => api.get(`/appointment-types/public/org/${orgId}`, { params: p }),
-  getAll: (p?: any) => api.get('/appointment-types', { params: p }), getById: (id: string) => api.get(`/appointment-types/${id}`),
-  create: (d: any) => api.post('/appointment-types', d), update: (id: string, d: any) => api.put(`/appointment-types/${id}`, d),
+  getBySlug: (slug: string) => api.get(`/appointment-types/slug/${slug}`),
+  getAll: (p?: any) => api.get('/appointment-types', { params: p }),
+  getById: (id: string) => api.get(`/appointment-types/${id}`),
+  create: (d: any) => api.post('/appointment-types', d),
+  update: (id: string, d: any) => api.put(`/appointment-types/${id}`, d),
   remove: (id: string) => api.delete(`/appointment-types/${id}`),
+  toggleSuspend: (id: string, d: any) => api.put(`/appointment-types/${id}/toggle-suspend`, d),
 };
 export const appointmentAPI = {
   getSlots: (p: any) => api.get('/appointments/slots', { params: p }),
@@ -56,6 +71,9 @@ export const appointmentAPI = {
   reschedule: (id: string, d: any) => api.put(`/appointments/${id}/reschedule`, d),
   shiftAppointment: (id: string, d: any) => api.put(`/appointments/${id}/shift`, d),
   bulkShift: (d: any) => api.post('/appointments/bulk-shift', d),
+  bulkCancel: (d: any) => api.post('/appointments/bulk-cancel', d),
+  bulkReschedule: (d: any) => api.post('/appointments/bulk-reschedule', d),
+  bulkStatusUpdate: (d: any) => api.post('/appointments/bulk-status', d),
   getCalendarEvents: (p?: any) => api.get('/appointments/calendar', { params: p }),
   getAnalytics: () => api.get('/appointments/analytics'),
   downloadPDF: (id: string) => api.get(`/appointments/${id}/pdf`, { responseType: 'blob' }),
@@ -93,7 +111,8 @@ export const notificationTemplateAPI = {
   remove: (id: string) => api.delete(`/notification-templates/${id}`),
 };
 export const webhookAPI = {
-  getAll: () => api.get('/webhooks'), create: (d: any) => api.post('/webhooks', d),
+  getAll: () => api.get('/webhooks'),
+  create: (d: any) => api.post('/webhooks', d),
   update: (id: string, d: any) => api.put(`/webhooks/${id}`, d),
   remove: (id: string) => api.delete(`/webhooks/${id}`),
   test: (id: string) => api.post(`/webhooks/${id}/test`),

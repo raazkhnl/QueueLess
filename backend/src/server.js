@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const crypto = require('crypto');
 const connectDB = require('./config/db');
 const logger = require('./config/logger');
 const errorHandler = require('./middleware/errorHandler');
@@ -14,7 +15,19 @@ const app = express();
 
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-Requested-With'],
+}));
+
+// Request ID middleware — generates a unique ID per request for tracing
+app.use((req, res, next) => {
+  req.requestId = req.headers['x-request-id'] || crypto.randomUUID();
+  res.setHeader('X-Request-Id', req.requestId);
+  next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -61,9 +74,20 @@ app.use('/api/audit-logs', require('./routes/auditLogs'));
 app.use('/api/staff-availability', require('./routes/staffAvailability'));
 app.use('/api/messages', require('./routes/messages'));
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV, version: '2.0.0' });
+// Health check — includes MongoDB connectivity status
+app.get('/api/health', async (req, res) => {
+  const mongoose = require('mongoose');
+  const dbState = mongoose.connection.readyState;
+  const dbStates = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const isHealthy = dbState === 1;
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+    version: '2.1.0',
+    database: dbStates[dbState] || 'unknown',
+    uptime: Math.floor(process.uptime()),
+  });
 });
 
 // Serve frontend in production
@@ -76,6 +100,8 @@ if (process.env.NODE_ENV === 'production') {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+let server;
+
 const start = async () => {
   await connectDB();
 
@@ -87,10 +113,47 @@ const start = async () => {
     logger.warn('Reminder cron failed to start: ' + err.message);
   }
 
-  app.listen(PORT, () => {
-    logger.info(`QueueLess API v2.0 running on port ${PORT} (${process.env.NODE_ENV})`);
+  // Start no-show cron
+  try {
+    const { startNoShowCron } = require('./services/noShowService');
+    startNoShowCron();
+  } catch (err) {
+    logger.warn('No-show cron failed to start: ' + err.message);
+  }
+
+  server = app.listen(PORT, () => {
+    logger.info(`QueueLess API v2.1 running on port ${PORT} (${process.env.NODE_ENV})`);
     logger.info(`API Docs: http://localhost:${PORT}/api/docs`);
   });
 };
+
+// Graceful shutdown
+const shutdown = async (signal) => {
+  logger.info(`${signal} received — shutting down gracefully...`);
+  if (server) {
+    server.close(async () => {
+      logger.info('HTTP server closed');
+      try {
+        const mongoose = require('mongoose');
+        await mongoose.connection.close();
+        logger.info('MongoDB connection closed');
+      } catch (err) {
+        logger.error('Error closing MongoDB: ' + err.message);
+      }
+      process.exit(0);
+    });
+    // Force shutdown after 10s
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 start();
 module.exports = app;

@@ -153,25 +153,43 @@ exports.uploadExcel = async (req, res, next) => {
 exports.downloadSampleExcel = async (req, res, next) => {
   try {
     const { type } = req.params;
-    const workbook = XLSX.utils.book_new();
-    let data;
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'QueueLess';
+    workbook.created = new Date();
 
     if (type === 'users') {
-      data = [
-        { Name: 'John Doe', Email: 'john@example.com', Phone: '9841000001', Password: 'Pass@123', Role: 'staff', Branch_ID: '' },
-        { Name: 'Jane Smith', Email: 'jane@example.com', Phone: '9841000002', Password: 'Pass@123', Role: 'branch_manager', Branch_ID: '' },
+      const ws = workbook.addWorksheet('Users');
+      ws.columns = [
+        { header: 'Name', key: 'Name', width: 20 },
+        { header: 'Email', key: 'Email', width: 25 },
+        { header: 'Phone', key: 'Phone', width: 15 },
+        { header: 'Password', key: 'Password', width: 15 },
+        { header: 'Role', key: 'Role', width: 18 },
+        { header: 'Branch_ID', key: 'Branch_ID', width: 26 },
       ];
+      ws.addRow({ Name: 'John Doe', Email: 'john@example.com', Phone: '9841000001', Password: 'Pass@123', Role: 'staff', Branch_ID: '' });
+      ws.addRow({ Name: 'Jane Smith', Email: 'jane@example.com', Phone: '9841000002', Password: 'Pass@123', Role: 'branch_manager', Branch_ID: '' });
+      ws.getRow(1).font = { bold: true };
     } else {
-      data = [
-        { Name: 'Main Branch', Code: 'MB001', Address: 'Kathmandu, Nepal', Province: 'Bagmati', District: 'Kathmandu', City: 'Kathmandu', Phone: '01-4000001', Email: 'main@org.com', Latitude: '27.7172', Longitude: '85.3240' },
-        { Name: 'Pokhara Branch', Code: 'PK001', Address: 'Pokhara, Nepal', Province: 'Gandaki', District: 'Kaski', City: 'Pokhara', Phone: '061-500001', Email: 'pokhara@org.com', Latitude: '28.2096', Longitude: '83.9856' },
+      const ws = workbook.addWorksheet('Branches');
+      ws.columns = [
+        { header: 'Name', key: 'Name', width: 20 },
+        { header: 'Code', key: 'Code', width: 10 },
+        { header: 'Address', key: 'Address', width: 25 },
+        { header: 'Province', key: 'Province', width: 15 },
+        { header: 'District', key: 'District', width: 15 },
+        { header: 'City', key: 'City', width: 15 },
+        { header: 'Phone', key: 'Phone', width: 15 },
+        { header: 'Email', key: 'Email', width: 20 },
+        { header: 'Latitude', key: 'Latitude', width: 12 },
+        { header: 'Longitude', key: 'Longitude', width: 12 },
       ];
+      ws.addRow({ Name: 'Main Branch', Code: 'MB001', Address: 'Kathmandu, Nepal', Province: 'Bagmati', District: 'Kathmandu', City: 'Kathmandu', Phone: '01-4000001', Email: 'main@org.com', Latitude: '27.7172', Longitude: '85.3240' });
+      ws.addRow({ Name: 'Pokhara Branch', Code: 'PK001', Address: 'Pokhara, Nepal', Province: 'Gandaki', District: 'Kaski', City: 'Pokhara', Phone: '061-500001', Email: 'pokhara@org.com', Latitude: '28.2096', Longitude: '83.9856' });
+      ws.getRow(1).font = { bold: true };
     }
 
-    const sheet = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(workbook, sheet, type === 'users' ? 'Users' : 'Branches');
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
+    const buffer = await workbook.xlsx.writeBuffer();
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename=sample-${type}.xlsx`,

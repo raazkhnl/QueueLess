@@ -1,21 +1,29 @@
 const nodemailer = require('nodemailer');
+const NotificationTemplate = require('../models/NotificationTemplate');
 
-// Using Sender.net SMTP
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.sender.net',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SENDER_API_TOKEN || '',
-      pass: process.env.SENDER_API_TOKEN || '',
-    },
-  });
+// Singleton transporter with connection pooling
+let _transporter = null;
+const getTransporter = () => {
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: 'smtp.sender.net',
+      port: 587,
+      secure: false,
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      auth: {
+        user: process.env.SENDER_API_TOKEN || '',
+        pass: process.env.SENDER_API_TOKEN || '',
+      },
+    });
+  }
+  return _transporter;
 };
 
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
-    const transporter = createTransporter();
+    const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: `"QueueLess" <${process.env.SENDER_FROM_EMAIL || 'noreply@queueless.app'}>`,
       to,
@@ -30,6 +38,59 @@ const sendEmail = async ({ to, subject, html, text }) => {
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Render a template by replacing {{variables}} with data values
+ * @param {string} template - Template string with {{variable}} placeholders
+ * @param {object} data - Key/value pairs for substitution
+ */
+const renderTemplate = (template, data = {}) => {
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    return data[key] !== undefined ? data[key] : match;
+  });
+};
+
+/**
+ * Try to send email using org-specific NotificationTemplate.
+ * Falls back to hardcoded templates if no custom template exists.
+ */
+const sendTemplatedEmail = async ({ to, orgId, templateType, channel = 'email', language = 'en', data = {} }) => {
+  try {
+    // Try to find org-specific template
+    if (orgId) {
+      const template = await NotificationTemplate.findOne({
+        organization: orgId, type: templateType, channel, language, isActive: true,
+      });
+      if (template) {
+        const subject = renderTemplate(template.subject, data);
+        const body = renderTemplate(template.bodyTemplate, data);
+        return sendEmail({ to, subject, html: wrapInLayout(body) });
+      }
+    }
+    // Fall back to hardcoded templates
+    const fallback = emailTemplates[templateType];
+    if (fallback) {
+      const rendered = fallback(data);
+      return sendEmail({ to, subject: rendered.subject, html: rendered.html });
+    }
+    return { success: false, error: 'No template found' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/** Wrap plain text body in the standard QueueLess email layout */
+const wrapInLayout = (bodyHtml) => `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;padding:20px;">
+    <div style="background:#2563eb;color:white;padding:20px;border-radius:8px 8px 0 0;text-align:center;">
+      <h1 style="margin:0;font-size:24px;">QueueLess</h1>
+    </div>
+    <div style="background:white;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
+      ${bodyHtml}
+      <p style="color:#6b7280;font-size:12px;text-align:center;margin-top:20px;">QueueLess - Public Service, Fast Forward</p>
+    </div>
+  </div>
+`;
 
 const emailTemplates = {
   bookingConfirmed: (data) => ({
@@ -112,6 +173,24 @@ const emailTemplates = {
       </div>
     `
   }),
+
+  passwordReset: (data) => ({
+    subject: `Password Reset - QueueLess`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;padding:20px;">
+        <div style="background:#dc2626;color:white;padding:20px;border-radius:8px 8px 0 0;text-align:center;">
+          <h1 style="margin:0;font-size:24px;">🔑 Password Reset</h1>
+        </div>
+        <div style="background:white;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;text-align:center;">
+          <p>Hello <strong>${data.name}</strong>,</p>
+          <p>You requested a password reset. Your verification code is:</p>
+          <p style="font-size:32px;font-weight:bold;color:#dc2626;letter-spacing:8px;margin:20px 0;">${data.otp}</p>
+          <p style="color:#6b7280;">This code expires in 10 minutes.</p>
+          <p style="color:#6b7280;">If you did not request this, please ignore this email.</p>
+        </div>
+      </div>
+    `
+  }),
 };
 
-module.exports = { sendEmail, emailTemplates };
+module.exports = { sendEmail, emailTemplates, sendTemplatedEmail, renderTemplate, getTransporter };
