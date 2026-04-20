@@ -8,6 +8,8 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const crypto = require('crypto');
 const connectDB = require('./config/db');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 const logger = require('./config/logger');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -42,7 +44,23 @@ app.use('/api/', limiter);
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Sanitization
+app.use(mongoSanitize()); // Prevent NoSQL Injection
+app.use(xss());          // Prevent XSS in request bodies/params
+
 app.use(compression());
+
+// Dedicated rate limiter for Auth (Stricter)
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 requests per window (login/register)
+  message: { message: 'Too many auth attempts, please try again after an hour' },
+  standardHeaders: true, legacyHeaders: false,
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/otp', authLimiter);
 
 // HTTP request logging via Winston
 app.use(morgan('short', { stream: logger.stream }));
@@ -106,20 +124,27 @@ let server;
 const start = async () => {
   await connectDB();
 
-  // Start reminder cron
-  try {
-    const { startReminderCron } = require('./services/reminderService');
-    startReminderCron();
-  } catch (err) {
-    logger.warn('Reminder cron failed to start: ' + err.message);
-  }
+  // Background Crons - Only run on the first instance in clustered environments (e.g. PM2)
+  const isPrimaryInstance = process.env.NODE_APP_INSTANCE === undefined || process.env.NODE_APP_INSTANCE === '0';
 
-  // Start no-show cron
-  try {
-    const { startNoShowCron } = require('./services/noShowService');
-    startNoShowCron();
-  } catch (err) {
-    logger.warn('No-show cron failed to start: ' + err.message);
+  if (isPrimaryInstance) {
+    // Start reminder cron
+    try {
+      const { startReminderCron } = require('./services/reminderService');
+      startReminderCron();
+    } catch (err) {
+      logger.warn('Reminder cron failed to start: ' + err.message);
+    }
+
+    // Start no-show cron
+    try {
+      const { startNoShowCron } = require('./services/noShowService');
+      startNoShowCron();
+    } catch (err) {
+      logger.warn('No-show cron failed to start: ' + err.message);
+    }
+  } else {
+    logger.info(`Instance ${process.env.NODE_APP_INSTANCE} skipping background crons`);
   }
 
   server = app.listen(PORT, () => {

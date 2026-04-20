@@ -11,7 +11,12 @@ exports.getAll = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, category, active } = req.query;
     const query = {};
-    if (search) query.name = { $regex: search, $options: 'i' };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { keywords: { $regex: search, $options: 'i' } }
+      ];
+    }
     if (category) query.category = category;
     if (active !== undefined) query.isActive = active === 'true';
 

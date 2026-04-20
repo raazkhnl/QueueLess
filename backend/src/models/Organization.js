@@ -32,6 +32,7 @@ const organizationSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  keywords: { type: [String], index: true },
 }, { timestamps: true });
 
 organizationSchema.pre('validate', function(next) {
