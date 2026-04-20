@@ -37,6 +37,10 @@ docker exec queueless-api node src/seeds/seed.js
 # Frontend: http://localhost | API: http://localhost:5000 | Docs: http://localhost:5000/api/docs
 ```
 
+### Vercel Deployment
+The repository is fully configured for Vercel deployment (serverless backend and static frontend). 
+Read the [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for a comprehensive setup tutorial, including multi-origin CORS, environment variable lists, and MongoDB Atlas configuration.
+
 ## Test Credentials
 
 | Role | Email | Password |

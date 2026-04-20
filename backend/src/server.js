@@ -18,8 +18,16 @@ app.set('trust proxy', 1); // Trust reverse proxies (e.g. Nginx, Docker) for acc
 
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+  : ['*'];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-Requested-With'],
@@ -121,8 +129,24 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 let server;
 
-const start = async () => {
+let isConnected = false;
+const connectOnce = async () => {
+  if (isConnected) return;
   await connectDB();
+  isConnected = true;
+};
+
+// Vercel serverless request handler
+const handler = async (req, res) => {
+  await connectOnce();
+  app(req, res);
+};
+
+// Export for Vercel
+module.exports = handler;
+
+const start = async () => {
+  await connectOnce();
 
   // Background Crons - Only run on the first instance in clustered environments (e.g. PM2)
   const isPrimaryInstance = process.env.NODE_APP_INSTANCE === undefined || process.env.NODE_APP_INSTANCE === '0';
@@ -181,5 +205,6 @@ const shutdown = async (signal) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-start();
-module.exports = app;
+if (require.main === module) {
+  start();
+}

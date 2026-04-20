@@ -45,7 +45,26 @@ docker run -it --rm --name certbot \
 
 ---
 
-## 3. Option B: Bare Metal Deployment (Manual)
+## 3. Option C: Vercel Deployment
+
+This project is structured specifically to support modern serverless deployments via Vercel.
+
+**Steps:**
+1. Setup a MongoDB Atlas cluster and whitelist IP `0.0.0.0/0`.
+2. Import the `backend` folder as a project in Vercel. 
+   - Add `MONGODB_URI` and `JWT_SECRET` environment variables.
+3. Import the `frontend` folder as a second project in Vercel.
+   - Add the `VITE_API_URL` environment variable pointing to the backend Vercel URL you just deployed.
+4. Go back to the Vercel backend project and set `FRONTEND_URL` to your Vercel frontend URL. Redeploy the backend.
+
+Under the hood:
+- The backend utilizes `@vercel/node` via `backend/vercel.json` acting as a serverless function proxy instead of a typical Node daemon.
+- CORS dynamically supports multiple environments (commas are allowed).
+- The frontend `vercel.json` handles React Router SPA rewrite rules so direct links don't return 404s.
+
+---
+
+## 4. Option B: Bare Metal Deployment (Manual)
 
 ### 1. Build Frontend
 ```bash
