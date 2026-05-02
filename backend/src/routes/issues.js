@@ -12,7 +12,7 @@ const POPULATE = [
   { path: 'branch', select: 'name nameNp code' },
   { path: 'currentAssignee', select: 'name email role' },
   { path: 'citizen', select: 'name email phone' },
-  { path: 'linkedAppointments', select: 'refCode date startTime endTime status' },
+  { path: 'linkedAppointments', select: 'refCode fileNumber date startTime endTime status tokenNumber appointmentType branch', populate: [{ path: 'appointmentType', select: 'name nameNp roomNo' }, { path: 'branch', select: 'name nameNp code' }] },
   { path: 'comments.author', select: 'name role' },
   { path: 'history.actor', select: 'name role' },
   { path: 'history.toAssignee', select: 'name role' },

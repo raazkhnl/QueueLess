@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Building2, GitBranch, CalendarClock, Calendar, Clock, User, Mail, Phone, MapPin, ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Search, AlertCircle, Navigation } from 'lucide-react';
-import { orgAPI, branchAPI, apptTypeAPI, appointmentAPI } from '../../lib/api';
+import { orgAPI, branchAPI, apptTypeAPI, appointmentAPI, issueAPI } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useI18n } from '../../lib/i18n';
 import { formatDate, formatTime, downloadBlob } from '../../lib/utils';
@@ -41,6 +41,7 @@ export default function BookingWizard() {
   const [searchBranch, setSearchBranch] = useState('');
   const [searchService, setSearchService] = useState('');
   const [userLocation, setUserLocation] = useState<{lat:number;lng:number}|null>(null);
+  const [linkedIssue, setLinkedIssue] = useState<any>(null);
 
   // Search state
   const [orgSearch, setOrgSearch] = useState('');
@@ -77,9 +78,18 @@ export default function BookingWizard() {
     }
 
     navigator.geolocation?.getCurrentPosition(
-      pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }), 
+      pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setUserLocation({ lat: 27.7172, lng: 85.3240 }) // fallback to KTM
     );
+
+    // Hybrid: hydrate the source ticket so the user sees what they're booking against
+    const linkIssueId = params.get('linkIssue');
+    const issueRef = params.get('issueRef');
+    if (linkIssueId) {
+      issueAPI.getById(linkIssueId).then((r) => setLinkedIssue(r.data?.data || null)).catch(() => {});
+    } else if (issueRef) {
+      issueAPI.getTracking(issueRef).then((r) => setLinkedIssue(r.data?.data || null)).catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -230,14 +240,20 @@ export default function BookingWizard() {
       const { data } = await appointmentAPI.book(payload);
       setBooking(data.appointment);
 
-      // Hybrid linking: if we arrived from an issue, bidirectionally link the new appointment.
+      // Hybrid linking: if we arrived from an issue, bidirectionally link the new
+      // appointment AND post a public comment on the source ticket so the case
+      // worker sees the link in the ticket conversation.
       const linkIssueId = params.get('linkIssue');
       if (linkIssueId && data.appointment?._id) {
         try {
           const { hybridAPI } = await import('../../lib/api');
           await hybridAPI.linkEntities({ issueId: linkIssueId, appointmentId: data.appointment._id });
+          try {
+            const fd = new FormData();
+            fd.append('body', `${t('hybrid.bookedFromIssue')}: ${data.appointment.refCode} — ${selectedDate} ${selectedSlot.startTime}`);
+            await issueAPI.addComment(linkIssueId, fd);
+          } catch { /* comment best-effort */ }
         } catch {
-          // Soft-fail: booking is already created; surface a non-blocking notice.
           toast('Booked, but auto-linking to ticket failed', { icon: 'ℹ️' });
         }
       }
@@ -266,6 +282,20 @@ export default function BookingWizard() {
         <input type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
       </div>
       <div className="max-w-3xl mx-auto">
+        {linkedIssue && (
+          <div className="mb-4 p-3 rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-800/40 text-sm flex items-start gap-2" role="status">
+            <AlertCircle className="w-4 h-4 mt-0.5 text-indigo-600 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-indigo-900 dark:text-indigo-100">
+                {t('hybrid.bookingForTicket')} <span className="font-mono font-bold">{linkedIssue.refCode}</span>
+              </p>
+              {linkedIssue.subject && (
+                <p className="text-xs text-indigo-700 dark:text-indigo-200 truncate">{linkedIssue.subject}</p>
+              )}
+              <p className="text-[11px] text-indigo-600 dark:text-indigo-300/80 mt-0.5">{t('hybrid.bookingForTicketHint')}</p>
+            </div>
+          </div>
+        )}
         {/* Progress bar */}
         <div className="mb-8" role="navigation" aria-label="Booking progress">
           <div className="flex items-center justify-between mb-3">

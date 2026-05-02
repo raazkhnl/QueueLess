@@ -97,7 +97,7 @@ export default function Profile() {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     ...(isCitizen ? [{ id: 'bookings', label: 'Recent Bookings', icon: Calendar }] : []),
-    ...(isCitizen ? [{ id: 'tickets', label: 'My Tickets', icon: AlertCircle }] : []),
+    ...(isCitizen ? [{ id: 'tickets', label: t('issue.list.title'), icon: AlertCircle }] : []),
     ...(isAdmin ? [{ id: 'role', label: 'Role & Access', icon: Shield }] : []),
   ];
 
@@ -263,15 +263,15 @@ export default function Profile() {
       {activeTab === 'tickets' && isCitizen && (
         <div className="animate-fade-in space-y-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-slate-500">Latest 5 tickets</p>
-            <Link to="/my-issues" className="text-xs text-primary-600 hover:underline">View all</Link>
+            <p className="text-sm text-slate-500">{t('common.showing')} 5</p>
+            <Link to="/my-issues" className="text-xs text-primary-600 hover:underline">{t('common.viewAll')}</Link>
           </div>
-          {issuesLoading ? <p className="text-slate-400 text-center py-8">Loading...</p> :
+          {issuesLoading ? <p className="text-slate-400 text-center py-8">{t('common.loading')}</p> :
           recentIssues.length === 0 ? (
             <div className="card p-8 text-center">
               <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-400 mb-3">No tickets yet</p>
-              <Link to="/issue/submit" className="btn-primary btn-sm">Raise a ticket</Link>
+              <p className="text-slate-400 mb-3">{t('issue.list.empty')}</p>
+              <Link to="/issue/submit" className="btn-primary btn-sm">{t('issue.cta.raise')}</Link>
             </div>
           ) :
           recentIssues.map(i => (
@@ -281,10 +281,10 @@ export default function Profile() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-slate-500">{i.refCode}</p>
-                <p className="font-medium text-sm truncate">{i.subject || i.issueType?.name || 'Ticket'}</p>
+                <p className="font-medium text-sm truncate">{i.subject || i.issueType?.name || t('issue.list.title')}</p>
                 <p className="text-xs text-slate-500 truncate">{i.organization?.name}{i.branch?.name ? ` · ${i.branch.name}` : ''}</p>
               </div>
-              <span className="text-[10px] uppercase font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{(i.status || '').replace('_', ' ')}</span>
+              <span className="text-[10px] uppercase font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{t(`status.${i.status}`)}</span>
             </Link>
           ))}
         </div>

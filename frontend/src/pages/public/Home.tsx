@@ -44,7 +44,7 @@ export default function Home() {
                 {t('home.hero.cta')} <ArrowRight className="w-4 h-4" />
               </Link>
               <Link to="/issue/submit" className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-xl px-5 py-3.5 font-semibold hover:bg-white/20 transition-all">
-                <AlertCircle className="w-4 h-4" /> Raise an issue
+                <AlertCircle className="w-4 h-4" /> {t('issue.cta.raise')}
               </Link>
               <form onSubmit={handleSearch} className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 px-4 py-2">
                 <Search className="w-4 h-4 text-primary-200 mr-2" />
@@ -103,8 +103,8 @@ export default function Home() {
                 <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Book a follow-up appointment from a ticket</li>
               </ul>
               <div className="flex flex-wrap gap-3">
-                <Link to="/issue/submit" className="btn-primary"><AlertCircle className="w-4 h-4" /> Raise a ticket</Link>
-                <Link to="/my-issues" className="btn-secondary">My tickets</Link>
+                <Link to="/issue/submit" className="btn-primary"><AlertCircle className="w-4 h-4" /> {t('issue.cta.raise')}</Link>
+                <Link to="/my-issues" className="btn-secondary">{t('issue.cta.viewMine')}</Link>
               </div>
             </div>
             <div className="hidden md:flex justify-end">

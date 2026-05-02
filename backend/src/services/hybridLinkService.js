@@ -2,6 +2,78 @@ const Issue = require('../models/Issue');
 const Appointment = require('../models/Appointment');
 
 /**
+ * Status cascade — when something happens to one side of a linked
+ * appointment ⇄ issue pair, surface it to the other side automatically.
+ *
+ * On appointment {cancelled, completed, checked_in}: append a system note
+ * (history + comment) to every linked Issue so the case worker sees it.
+ *
+ * On issue {resolved, closed, reopened}: append a note to the appointment's
+ * `internalNotes` so the staff handling the appointment sees the resolution
+ * context.
+ *
+ * All side-effects are best-effort and never throw — failure to cascade
+ * shouldn't break the originating mutation.
+ */
+exports.cascadeAppointmentStatus = async (appointmentId, newStatus, actorUser) => {
+  try {
+    const apt = await Appointment.findById(appointmentId);
+    if (!apt || !Array.isArray(apt.linkedIssues) || apt.linkedIssues.length === 0) return;
+
+    const eventByStatus = {
+      cancelled: 'linked_appointment_cancelled',
+      completed: 'linked_appointment_completed',
+      checked_in: 'linked_appointment_checked_in',
+    };
+    const action = eventByStatus[newStatus];
+    if (!action) return;
+
+    const note = `Linked appointment ${apt.refCode} → ${newStatus.replace('_', ' ')}`;
+    for (const issueId of apt.linkedIssues) {
+      const issue = await Issue.findById(issueId);
+      if (!issue) continue;
+      issue.history.push({
+        action,
+        reason: note,
+        actor: actorUser?._id || null,
+        actorName: actorUser?.name || 'System',
+      });
+      issue.comments.push({
+        body: note,
+        author: actorUser?._id || null,
+        authorName: actorUser?.name || 'System',
+        isInternal: true,
+      });
+      await issue.save();
+    }
+  } catch (err) {
+    /* swallow — best-effort */
+  }
+};
+
+exports.cascadeIssueStatus = async (issueId, newStatus, actorUser, reason) => {
+  try {
+    if (!['resolved', 'closed', 'reopened'].includes(newStatus)) return;
+    const issue = await Issue.findById(issueId);
+    if (!issue || !Array.isArray(issue.linkedAppointments) || issue.linkedAppointments.length === 0) return;
+
+    const tag = newStatus === 'reopened' ? 'reopened' : newStatus;
+    const noteLine = `[Ticket ${issue.refCode}] ${tag.toUpperCase()}${reason ? ` — ${reason}` : ''}`;
+    const stamp = ` (${new Date().toISOString().slice(0, 16).replace('T', ' ')} by ${actorUser?.name || 'System'})`;
+    const fullNote = noteLine + stamp;
+
+    for (const aptId of issue.linkedAppointments) {
+      const apt = await Appointment.findById(aptId);
+      if (!apt) continue;
+      apt.internalNotes = apt.internalNotes ? `${apt.internalNotes}\n${fullNote}` : fullNote;
+      await apt.save();
+    }
+  } catch (err) {
+    /* swallow — best-effort */
+  }
+};
+
+/**
  * Creates a bidirectional link between an Appointment and an Issue.
  */
 exports.linkEntities = async (issueId, appointmentId, actorId) => {

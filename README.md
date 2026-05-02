@@ -47,9 +47,9 @@ cd frontend && npm run test:e2e
 ```
 
 **Coverage**
-- Backend: 29 tests across utils (BS calendar, NP geo, holidays, SMS), models (atomic counters, audit hash chain, ApiToken), services (paymentService, retryQueue, issueService approval chain).
-- Frontend: 21 tests across utility helpers, BS converter, the public navbar (logged-in vs logged-out branching), and the citizen sidebar drawer (open/close/links/role-aware sections/logout).
-- E2E: 6 Playwright specs covering the home CTAs, navbar visibility states, service catalogue, ticket-tracking error path, transparency board, and the avatar-trigger → drawer flow.
+- Backend: 36 tests — utils (BS calendar, NP geo, holidays, SMS), models (atomic counters, audit hash chain, ApiToken), services (paymentService, retryQueue, issueService approval chain), and **hybrid link / status cascade** (bidirectional linking, idempotency, apt → issue + issue → apt cascade integration).
+- Frontend: 27 tests — utility helpers, BS converter, navbar (logged-in vs logged-out branching), citizen sidebar drawer, and **i18n coverage** (every status/priority/history/issue/hybrid key resolves in EN, NE, and contains Devanagari for sampled keys).
+- E2E: 6 Playwright specs — home CTAs, navbar visibility states, service catalogue, ticket-tracking error path, transparency board, avatar-trigger → drawer flow.
 
 The CI pipeline at `.github/workflows/ci.yml` runs `npm test` on both packages,
 type-checks the frontend, and builds the production bundle on every push.
@@ -127,6 +127,48 @@ QueueLess is built so any Nepali ministry, department, palika, or private instit
 - **On-behalf submission** — staff at counters can book or file tickets for walk-in citizens; recorded with `bookedBy=staff`, `sourceChannel=in_person`, separable from self-service in analytics.
 - **Anti-spam** — every public POST runs through a honeypot middleware (invisible field + form-render-to-submit timing) so bots are 204'd silently without affecting humans.
 - **Closed-loop external integration** — query-param deep-links pre-fill citizen data, link bookings ⇄ tickets bidirectionally, and stamp `externalSubmissionNo` + `sourceSystem` for round-trip with originating gov portals.
+
+### Hybrid Linking (Appointment ⇄ Ticket)
+
+QueueLess treats appointments and tickets as first-class peers — every booking can have related tickets, every ticket can have related appointments, and the platform keeps both sides in sync.
+
+```
+            Citizen
+              ↓
+       ┌─────────────┐                     ┌─────────────┐
+       │ Appointment │  ─────link────────→ │   Issue /   │
+       │   QL-…       │ ←────link────────  │   Ticket    │
+       │   दर्ता-नं   │                     │   TKT-…     │
+       └─────────────┘                     └─────────────┘
+              │                                   │
+              │   apt cancelled / completed       │   issue resolved / closed / reopened
+              │   /checked-in →  history+comment  │   →  appended to apt.internalNotes
+              ▼                                   ▼
+       Linked ticket                      Linked appointment
+```
+
+**Crossing the boundary**
+- `AppointmentDetail` → "Raise related issue" → `/issue/submit?linkApt=…` (the ticket pre-fills citizen, branch, contact info from the appointment).
+- `TicketTracking` → "Book follow-up appointment" → `/book?linkIssue=…&issueRef=…` (BookingWizard shows a banner identifying the source ticket; on success, posts a system comment on the ticket *and* bidirectionally links the new appointment).
+- `IssueType.requiresAppointment === true` → wizard auto-redirects to booking after submission.
+
+**Status cascade**
+- `appointmentController.updateStatus|cancel` → `hybridLinkService.cascadeAppointmentStatus`: pushes a localised history event + internal comment to every linked ticket on `cancelled / completed / checked_in`.
+- `issueService.updateStatus` (`resolved / closed / reopened`) → `cascadeIssueStatus`: appends a stamped line to `appointment.internalNotes` on every linked appointment.
+- All cascades are best-effort; failure never blocks the originating mutation.
+
+**Backend cross-population**
+- `GET /api/appointments/ref/:code` populates `linkedIssues` with `refCode / subject / status / priority / issueType.{name,nameNp}`.
+- `GET /api/issues/track/:refCode` and `/api/issues/:id` populate `linkedAppointments` with full date / startTime / status / tokenNumber / appointmentType / branch.
+
+### Bilingual support — Issue module
+The ticketing UI now ships full **English + नेपाली** coverage. New i18n namespaces:
+- `status.*` — all 8 issue statuses + 8 appointment statuses.
+- `priority.*` — low / medium / high / critical.
+- `history.*` — every history action (created, status_changed, forwarded, assigned, reopened, comment_added, internal_note, attachments_added, linked_to_appointment, escalated, approval_chain_started/approved/rejected, linked_appointment_cancelled/completed/checked_in).
+- `issue.*` — wizard, tracking page, MyIssues list, profile tab, toasts, role badges.
+- `hybrid.*` — banners and link cards on both sides of the appointment ⇄ ticket boundary.
+- All citizen-facing renders honour `lang === 'ne'` and prefer `nameNp` fields when present.
 
 ### Dynamic Issue / Grievance / Ticketing System (DITMS)
 A first-class ticketing layer that runs alongside appointment booking — citizens can raise tickets standalone, after an appointment, or be auto-routed into booking from a ticket that requires an office visit.

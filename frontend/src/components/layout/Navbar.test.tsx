@@ -20,11 +20,12 @@ describe('Navbar', () => {
     expect(screen.queryByTestId('account-menu-trigger')).not.toBeInTheDocument();
   });
 
-  it('always shows public links: Services, Book, Raise issue', () => {
+  it('always shows public links to Services, Book, and Raise issue', () => {
     renderNav();
-    expect(screen.getAllByText(/Services/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Book/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Raise issue/i).length).toBeGreaterThan(0);
+    // Anchor against href to be language-agnostic
+    expect(screen.getAllByRole('link').filter((a) => a.getAttribute('href') === '/services').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link').filter((a) => a.getAttribute('href') === '/book').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link').filter((a) => a.getAttribute('href') === '/issue/submit').length).toBeGreaterThan(0);
   });
 
   it('shows avatar trigger and hides login when authenticated', () => {

@@ -65,9 +65,9 @@ export default function Navbar() {
             </form>
 
             <div className="hidden md:flex items-center gap-1.5">
-              <Link to="/services" className="btn-ghost btn-sm gap-1"><Building2 className="w-4 h-4" />Services</Link>
+              <Link to="/services" className="btn-ghost btn-sm gap-1"><Building2 className="w-4 h-4" />{t('admin.serviceTypes')}</Link>
               <Link to="/book" className="btn-ghost btn-sm">{t('nav.book')}</Link>
-              <Link to="/issue/submit" className="btn-ghost btn-sm gap-1"><AlertCircle className="w-4 h-4" />Raise issue</Link>
+              <Link to="/issue/submit" className="btn-ghost btn-sm gap-1"><AlertCircle className="w-4 h-4" />{t('issue.cta.raiseShort')}</Link>
               <span className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" aria-hidden="true" />
               <button onClick={toggleDark} className="btn-ghost btn-sm" title="Toggle dark mode" aria-label="Toggle dark mode">
                 {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -115,9 +115,9 @@ export default function Navbar() {
                 <Search className="w-4 h-4 text-slate-400" />
                 <input value={searchRef} onChange={(e) => setSearchRef(e.target.value)} placeholder="Search ref code…" className="bg-transparent text-sm outline-none flex-1" aria-label="Search" />
               </form>
-              <Link to="/services" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">Services</Link>
+              <Link to="/services" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">{t('admin.serviceTypes')}</Link>
               <Link to="/book" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">{t('nav.book')}</Link>
-              <Link to="/issue/submit" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">Raise issue</Link>
+              <Link to="/issue/submit" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">{t('issue.cta.raiseShort')}</Link>
 
               <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
                 <button onClick={toggleDark} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800 w-full">

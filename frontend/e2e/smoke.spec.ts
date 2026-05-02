@@ -11,9 +11,9 @@ import { test, expect } from '@playwright/test';
 test('home page loads and exposes the headline CTAs', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/QueueLess|Queue/i);
-  // Hero CTAs
-  await expect(page.getByRole('link', { name: /Book Now/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Raise an issue/i })).toBeVisible();
+  // Hero CTAs — anchor by href so tests don't break when copy changes (i18n)
+  await expect(page.locator('a[href="/book"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/issue/submit"]').first()).toBeVisible();
 });
 
 test('navbar shows public links and login when logged out', async ({ page }) => {

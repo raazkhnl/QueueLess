@@ -160,6 +160,13 @@ exports.updateStatus = async (issueId, newStatus, actorUser, reason = '') => {
   });
 
   await issue.save();
+
+  // Hybrid cascade — best-effort, never throws
+  try {
+    const hybrid = require('./hybridLinkService');
+    hybrid.cascadeIssueStatus(issue._id, newStatus, actorUser, reason).catch(() => {});
+  } catch { /* swallow */ }
+
   return issue;
 };
 

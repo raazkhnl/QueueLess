@@ -242,11 +242,12 @@ exports.getByRefCode = async (req, res, next) => {
     // Accept either internal refCode (QL-…) or gov-style file number (BC/FY/SEQ).
     const code = req.params.refCode;
     const appointment = await Appointment.findOne({ $or: [{ refCode: code }, { fileNumber: code }] })
-      .populate('organization', 'name slug branding email phone address')
-      .populate('branch', 'name address location phone email')
-      .populate('appointmentType', 'name description duration price mode color icon customFields requiredDocuments feeBreakdown processingTimeDays instructions')
+      .populate('organization', 'name nameNp slug branding email phone address')
+      .populate('branch', 'name nameNp address location phone email')
+      .populate('appointmentType', 'name nameNp description duration price mode color icon customFields requiredDocuments feeBreakdown processingTimeDays instructions')
       .populate('citizen', 'name email phone')
-      .populate('assignedStaff', 'name');
+      .populate('assignedStaff', 'name')
+      .populate({ path: 'linkedIssues', select: 'refCode subject status priority issueType slaDueDate', populate: { path: 'issueType', select: 'name nameNp' } });
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
     res.json({ appointment });
   } catch (error) { next(error); }
@@ -255,12 +256,13 @@ exports.getByRefCode = async (req, res, next) => {
 exports.getById = async (req, res, next) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate('organization', 'name slug branding settings email phone address')
-      .populate('branch', 'name address location phone email workingHours')
-      .populate('appointmentType', 'name description duration price mode color icon customFields')
+      .populate('organization', 'name nameNp slug branding settings email phone address')
+      .populate('branch', 'name nameNp address location phone email workingHours')
+      .populate('appointmentType', 'name nameNp description duration price mode color icon customFields')
       .populate('citizen', 'name email phone')
       .populate('assignedStaff', 'name email')
-      .populate('bookedBy', 'name');
+      .populate('bookedBy', 'name')
+      .populate({ path: 'linkedIssues', select: 'refCode subject status priority issueType slaDueDate', populate: { path: 'issueType', select: 'name nameNp' } });
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
     res.json({ appointment });
   } catch (error) { next(error); }
@@ -317,6 +319,12 @@ exports.updateStatus = async (req, res, next) => {
     if (status === 'cancelled') triggerWebhooks(appointment.organization, 'appointment.cancelled', appointment).catch(() => {});
     if (status === 'checked_in') triggerWebhooks(appointment.organization, 'appointment.checked_in', appointment).catch(() => {});
 
+    // Hybrid cascade — surface to linked tickets
+    try {
+      const { cascadeAppointmentStatus } = require('../services/hybridLinkService');
+      cascadeAppointmentStatus(appointment._id, status, req.user).catch(() => {});
+    } catch {}
+
     res.json({ appointment });
   } catch (error) { next(error); }
 };
@@ -332,9 +340,15 @@ exports.cancel = async (req, res, next) => {
     appointment.cancelledAt = new Date();
     appointment.cancellationReason = req.body.reason || 'Cancelled by user';
     await appointment.save();
-    
+
     triggerWebhooks(appointment.organization, 'appointment.cancelled', appointment).catch(() => {});
-    
+
+    // Hybrid cascade
+    try {
+      const { cascadeAppointmentStatus } = require('../services/hybridLinkService');
+      cascadeAppointmentStatus(appointment._id, 'cancelled', req.user).catch(() => {});
+    } catch {}
+
     res.json({ appointment });
   } catch (error) { next(error); }
 };

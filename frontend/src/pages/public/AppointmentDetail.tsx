@@ -173,15 +173,44 @@ export default function AppointmentDetail() {
             <button onClick={handleExportICal} className="btn-secondary flex-1"><FileDown className="w-4 h-4" />{t('admin.calendar')}</button>
           </div>
 
-          {/* Hybrid Ticketing Section */}
+          {/* Hybrid Ticketing Section — linked tickets + raise CTA */}
+          {apt.linkedIssues?.length > 0 && (
+            <div className="card p-5 mt-6 border-indigo-200 bg-indigo-50/30 space-y-3">
+              <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-indigo-500" />
+                {t('hybrid.linkedTicketTitle')} ({apt.linkedIssues.length})
+              </h3>
+              <div className="space-y-2">
+                {apt.linkedIssues.map((iss: any) => (
+                  <Link key={iss._id} to={`/issue/track/${iss.refCode}`}
+                    className="block p-3 bg-white border border-slate-200 rounded hover:border-indigo-300 transition-colors">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <p className="font-mono font-bold text-sm text-slate-800">{iss.refCode}</p>
+                      <span className="text-[10px] uppercase font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">{t(`status.${iss.status}`)}</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700 truncate">{iss.subject || (lang === 'ne' && iss.issueType?.nameNp ? iss.issueType.nameNp : iss.issueType?.name)}</p>
+                    {iss.priority && (
+                      <p className="text-[11px] text-slate-500 mt-0.5">{t('issue.field.priority')}: {t(`priority.${iss.priority}`)}</p>
+                    )}
+                    <p className="text-[11px] text-indigo-600 font-medium mt-1">{t('hybrid.viewTicket')} →</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="card p-5 mt-6 border-indigo-200 bg-indigo-50/50 space-y-3">
              <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                <AlertCircle className="w-4 h-4 text-indigo-500" />
-               Need specialized help?
+               {t('hybrid.raiseFromAppointment')}
              </h3>
-             <p className="text-sm text-slate-600">If you have an issue related to this appointment, you can raise a ticket and link it directly.</p>
+             <p className="text-sm text-slate-600">
+               {lang === 'ne'
+                 ? 'यो अपोइन्टमेन्टसम्बन्धी कुनै समस्या भएमा टिकट दर्ता गरी सिधै जोड्न सक्नुहुन्छ।'
+                 : 'If you have an issue related to this appointment, you can raise a ticket and link it directly.'}
+             </p>
              <Link to={`/issue/submit?linkApt=${apt._id}`} className="btn-secondary w-full text-indigo-700 bg-white border-indigo-200 hover:bg-slate-50">
-               Raise Related Issue
+               {t('issue.cta.raise')}
              </Link>
           </div>
 
