@@ -1,17 +1,19 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Building2, GitBranch, CalendarClock, Users, FileSpreadsheet, Settings, ClipboardList, Calendar, Star, Shield, Globe, BarChart3, Webhook, Bell , UserCog } from 'lucide-react';
+import { LayoutDashboard, Building2, GitBranch, CalendarClock, Users, FileSpreadsheet, Settings, ClipboardList, Calendar, Star, Shield, Globe, BarChart3, Webhook, Bell , UserCog, QrCode, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 const links = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['super_admin','org_admin','branch_manager'], section: 'main' },
   { to: '/admin/bookings', icon: ClipboardList, label: 'Bookings', roles: ['super_admin','org_admin','branch_manager','staff'], section: 'main' },
   { to: '/admin/calendar', icon: Calendar, label: 'Calendar', roles: ['super_admin','org_admin','branch_manager','staff'], section: 'main' },
+  { to: '/admin/check-in', icon: QrCode, label: 'QR Check-in', roles: ['super_admin','org_admin','branch_manager','staff'], section: 'main' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports', roles: ['super_admin','org_admin','branch_manager'], section: 'main' },
   { to: '/admin/organizations', icon: Building2, label: 'Organizations', roles: ['super_admin'], section: 'manage' },
   { to: '/admin/branches', icon: GitBranch, label: 'Branches', roles: ['super_admin','org_admin'], section: 'manage' },
   { to: '/admin/appointment-types', icon: CalendarClock, label: 'Service Types', roles: ['super_admin','org_admin','branch_manager'], section: 'manage' },
   { to: '/admin/users', icon: Users, label: 'Users & Staff', roles: ['super_admin','org_admin'], section: 'manage' },
   { to: '/admin/staff-scheduling', icon: UserCog, label: 'Staff Scheduling', roles: ['super_admin','org_admin','branch_manager'], section: 'manage' },
+  { to: '/admin/issues', icon: AlertCircle, label: 'Tickets', roles: ['super_admin','org_admin','branch_manager','staff'], section: 'manage' },
   { to: '/admin/feedback', icon: Star, label: 'Feedback', roles: ['super_admin','org_admin','branch_manager'], section: 'manage' },
   { to: '/admin/bulk-upload', icon: FileSpreadsheet, label: 'Bulk Upload', roles: ['super_admin','org_admin'], section: 'tools' },
   { to: '/admin/webhooks', icon: Webhook, label: 'Webhooks', roles: ['super_admin','org_admin'], section: 'tools' },

@@ -22,6 +22,8 @@ export default function BookingWizard() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [renderedAt] = useState(() => Date.now());
+  const [hp, setHp] = useState('');
 
   const [orgs, setOrgs] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
@@ -211,6 +213,10 @@ export default function BookingWizard() {
       if (extSubNo) payload.externalSubmissionNo = extSubNo;
       if (srcSys) payload.sourceSystem = srcSys;
 
+      // Anti-spam honeypot fields
+      payload._hp = hp;
+      payload._t = renderedAt;
+
       if (Object.keys(customFields).length > 0) payload.customFieldValues = customFields;
       if (!isAuthenticated) {
         payload.guestName = guestInfo.name;
@@ -223,6 +229,19 @@ export default function BookingWizard() {
       }
       const { data } = await appointmentAPI.book(payload);
       setBooking(data.appointment);
+
+      // Hybrid linking: if we arrived from an issue, bidirectionally link the new appointment.
+      const linkIssueId = params.get('linkIssue');
+      if (linkIssueId && data.appointment?._id) {
+        try {
+          const { hybridAPI } = await import('../../lib/api');
+          await hybridAPI.linkEntities({ issueId: linkIssueId, appointmentId: data.appointment._id });
+        } catch {
+          // Soft-fail: booking is already created; surface a non-blocking notice.
+          toast('Booked, but auto-linking to ticket failed', { icon: 'ℹ️' });
+        }
+      }
+
       setStep(5);
       toast.success(t('booking.confirmed'));
     } catch (err: any) {
@@ -241,6 +260,11 @@ export default function BookingWizard() {
 
   return (
     <div className="min-h-[80vh] py-8 px-4">
+      {/* Honeypot — invisible to humans */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}>
+        <label>Leave this field empty</label>
+        <input type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
+      </div>
       <div className="max-w-3xl mx-auto">
         {/* Progress bar */}
         <div className="mb-8" role="navigation" aria-label="Booking progress">
@@ -358,6 +382,74 @@ export default function BookingWizard() {
           <div className="animate-fade-in">
             <button onClick={() => setStep(2)} className="btn-ghost btn-sm mb-4"><ArrowLeft className="w-4 h-4" />{t('booking.back')}</button>
             <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white mb-4">{t('booking.pickDateTime')}</h2>
+
+            {/* Service requirements panel — gov-grade transparency before they pick a slot */}
+            {selectedType && (selectedType.requiredDocuments?.length > 0 || selectedType.feeBreakdown?.length > 0 || selectedType.eligibility || selectedType.processingTimeDays > 0 || selectedType.instructions) && (
+              <div className="card border-amber-200 bg-amber-50/40 dark:bg-amber-900/10 dark:border-amber-900/30 p-4 mb-5 space-y-3">
+                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  {lang === 'ne' ? 'सेवा सम्बन्धी जानकारी' : 'Before you book'}
+                </h3>
+                {selectedType.requiredDocuments?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-amber-800 dark:text-amber-300 tracking-wider mb-1">
+                      {lang === 'ne' ? 'आवश्यक कागजातहरू' : 'Documents to bring'}
+                    </p>
+                    <ul className="text-sm text-slate-700 dark:text-slate-200 space-y-1 list-disc list-inside">
+                      {selectedType.requiredDocuments.map((d: any, i: number) => (
+                        <li key={i}>
+                          {lang === 'ne' && d.nameNp ? d.nameNp : d.name}
+                          {!d.isMandatory && <span className="text-xs text-slate-500 ml-1">({lang === 'ne' ? 'वैकल्पिक' : 'optional'})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {selectedType.eligibility && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-amber-800 dark:text-amber-300 tracking-wider mb-0.5">
+                      {lang === 'ne' ? 'योग्यता' : 'Eligibility'}
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                      {lang === 'ne' && selectedType.eligibilityNp ? selectedType.eligibilityNp : selectedType.eligibility}
+                    </p>
+                  </div>
+                )}
+                {selectedType.feeBreakdown?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-amber-800 dark:text-amber-300 tracking-wider mb-1">
+                      {lang === 'ne' ? 'शुल्क विवरण' : 'Fee breakdown'}
+                    </p>
+                    <table className="text-sm w-full">
+                      <tbody>
+                        {selectedType.feeBreakdown.map((f: any, i: number) => (
+                          <tr key={i} className="border-b last:border-0 border-amber-100 dark:border-amber-900/30">
+                            <td className="py-1 text-slate-700 dark:text-slate-200">{lang === 'ne' && f.labelNp ? f.labelNp : f.label}</td>
+                            <td className="py-1 text-right font-semibold text-slate-900 dark:text-white">NPR {f.amount}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-amber-200 dark:border-amber-800/40">
+                          <td className="py-1 text-slate-900 dark:text-white font-semibold">{lang === 'ne' ? 'कुल' : 'Total'}</td>
+                          <td className="py-1 text-right font-bold text-amber-700 dark:text-amber-300">NPR {selectedType.feeBreakdown.reduce((s: number, f: any) => s + (f.amount || 0), 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {selectedType.processingTimeDays > 0 && (
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    <strong>{lang === 'ne' ? 'अनुमानित प्रक्रिया समय:' : 'Processing time:'}</strong>{' '}
+                    {selectedType.processingTimeDays} {lang === 'ne' ? 'दिन' : 'day(s)'}
+                    {selectedType.processingTimeNote && ` — ${selectedType.processingTimeNote}`}
+                  </p>
+                )}
+                {selectedType.instructions && (
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    {lang === 'ne' && selectedType.instructionsNp ? selectedType.instructionsNp : selectedType.instructions}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="mb-6">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('booking.selectDate')}</label>
               <div className="flex gap-2 overflow-x-auto pb-2">

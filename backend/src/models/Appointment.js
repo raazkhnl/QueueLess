@@ -46,6 +46,13 @@ const appointmentSchema = new mongoose.Schema({
   roomNoNp: { type: String },
   externalSubmissionNo: { type: String, index: true },
   sourceSystem: { type: String },
+  sourceChannel: { type: String, enum: ['portal', 'in_person', 'phone', 'external'], default: 'portal' },
+  linkedIssues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Issue' }],
+
+  // Government file routing — दर्ता/चलानी number, scoped per branch+fiscal-year and exposed
+  // to citizens as the human-friendly tracking handle.
+  fileNumber: { type: String, index: true },
+  fiscalYearBs: { type: String },
 }, { timestamps: true });
 
 appointmentSchema.index({ branchCode: 1 });
@@ -55,15 +62,30 @@ appointmentSchema.index({ citizen: 1, date: 1 });
 appointmentSchema.index({ assignedStaff: 1, date: 1 });
 appointmentSchema.index({ status: 1 });
 
-// Generate refCode with branch code and token number
+// Compute the active Nepali fiscal year (Shrawan→Ashadh). E.g. AD 2026-05-01 sits
+// in BS 2083-01-18, which falls in fiscal year 2082-83 (started 2082-04-01 BS).
+function bsFiscalYearForDate(d) {
+  try {
+    const np = require('../utils/nepaliDate');
+    const bs = np.adToBs(d);
+    // BS month 4 = Shrawan = start of FY. Months 1..3 of year Y belong to FY (Y-1)/Y.
+    const startYear = bs.month >= 4 ? bs.year : bs.year - 1;
+    const endYear = startYear + 1;
+    return `${startYear}-${String(endYear).slice(-2)}`;
+  } catch {
+    const y = new Date(d).getFullYear();
+    return `${y}`;
+  }
+}
+
+// Generate refCode with branch code, token number, and file (दर्ता) number.
 appointmentSchema.pre('save', async function(next) {
   if (this.isNew) {
-    // Generate ref code: QL-{BRANCHCODE}-{RANDOM}
     const bc = this.branchCode || 'XX';
     const ts = Date.now().toString(36).slice(-4).toUpperCase();
     const rand = uuidv4().slice(0, 6).toUpperCase();
     this.refCode = `QL-${bc}-${ts}${rand}`;
-    
+
     // Auto-increment token per branch per day
     if (!this.tokenNumber) {
       const startOfDay = new Date(this.date);
@@ -76,6 +98,19 @@ appointmentSchema.pre('save', async function(next) {
         status: { $nin: ['cancelled'] }
       });
       this.tokenNumber = count + 1;
+    }
+
+    // Generate gov-style दर्ता / file number scoped to branch + fiscal year.
+    if (!this.fileNumber) {
+      try {
+        const fy = bsFiscalYearForDate(this.date || new Date());
+        this.fiscalYearBs = fy;
+        const Counter = mongoose.model('Counter');
+        const seq = await Counter.next(`appointment:${bc}:${fy}`);
+        this.fileNumber = `${bc}/${fy}/${String(seq).padStart(4, '0')}`;
+      } catch (err) {
+        // Counter is best-effort; refCode + tokenNumber are sufficient for booking flow.
+      }
     }
   }
   next();

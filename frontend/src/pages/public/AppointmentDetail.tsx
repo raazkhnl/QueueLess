@@ -5,6 +5,7 @@ import { appointmentAPI, feedbackAPI } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useI18n } from '../../lib/i18n';
 import { formatDate, formatTime, statusColors, downloadBlob } from '../../lib/utils';
+import { formatBs } from '../../lib/nepaliDate';
 import toast from 'react-hot-toast';
 
 export default function AppointmentDetail() {
@@ -99,6 +100,12 @@ export default function AppointmentDetail() {
                   <p className="text-sm font-semibold text-emerald-600 font-mono bg-emerald-50 inline-block px-2 py-0.5 rounded">{apt.externalSubmissionNo}</p>
                 </div>
               )}
+              {apt.fileNumber && (
+                <div className="mt-2">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">{lang === 'ne' ? 'दर्ता नं.' : 'File / दर्ता No.'}</p>
+                  <p className="text-sm font-semibold text-indigo-700 font-mono bg-indigo-50 inline-block px-2 py-0.5 rounded">{apt.fileNumber}</p>
+                </div>
+              )}
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">{t('common.token')}</p>
@@ -111,6 +118,7 @@ export default function AppointmentDetail() {
               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0"><Calendar className="w-5 h-5 text-blue-600" /></div>
               <div><p className="text-xs text-slate-500">{t('common.date')} & {t('common.time')}</p>
                 <p className="font-semibold">{formatDate(apt.date, { weekday:'long', year:'numeric', month:'long', day:'numeric' }, lang)}</p>
+                <p className="text-xs text-slate-500">{lang === 'ne' ? 'वि.सं.' : 'BS'} {formatBs(apt.date, { mode: 'long', lang })}</p>
                 <p className="text-sm text-slate-600">{formatTime(apt.startTime, lang)} – {formatTime(apt.endTime, lang)} ({apt.duration} {t('common.min')})</p></div>
             </div>
             <div className="flex items-start gap-3">
@@ -163,6 +171,18 @@ export default function AppointmentDetail() {
           <div className="flex flex-col sm:flex-row gap-3 mt-8">
             <button onClick={handleDownloadPDF} className="btn-primary flex-1"><Download className="w-4 h-4" />{t('common.download')} PDF</button>
             <button onClick={handleExportICal} className="btn-secondary flex-1"><FileDown className="w-4 h-4" />{t('admin.calendar')}</button>
+          </div>
+
+          {/* Hybrid Ticketing Section */}
+          <div className="card p-5 mt-6 border-indigo-200 bg-indigo-50/50 space-y-3">
+             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+               <AlertCircle className="w-4 h-4 text-indigo-500" />
+               Need specialized help?
+             </h3>
+             <p className="text-sm text-slate-600">If you have an issue related to this appointment, you can raise a ticket and link it directly.</p>
+             <Link to={`/issue/submit?linkApt=${apt._id}`} className="btn-secondary w-full text-indigo-700 bg-white border-indigo-200 hover:bg-slate-50">
+               Raise Related Issue
+             </Link>
           </div>
 
           {/* Feedback section */}

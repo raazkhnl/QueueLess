@@ -13,6 +13,8 @@ const StaffAvailability = require('../models/StaffAvailability');
 const Message = require('../models/Message');
 const Webhook = require('../models/Webhook');
 const NotificationTemplate = require('../models/NotificationTemplate');
+const IssueType = require('../models/IssueType');
+const Issue = require('../models/Issue');
 
 const seed = async () => {
   try {
@@ -26,7 +28,8 @@ const seed = async () => {
       Appointment.deleteMany({}),
       AppConfig.deleteMany({}), Feedback.deleteMany({}), AuditLog.deleteMany({}),
       StaffAvailability.deleteMany({}), Message.deleteMany({}),
-      Webhook.deleteMany({}), NotificationTemplate.deleteMany({})
+      Webhook.deleteMany({}), NotificationTemplate.deleteMany({}),
+      IssueType.deleteMany({}), Issue.deleteMany({})
     ]);
     console.log('Cleared existing data');
 
@@ -80,7 +83,23 @@ const seed = async () => {
     // IRD Service Types
     const irdPAN = await AppointmentType.create({
       organization: irdOrg._id, name: 'PAN Registration', nameNp: 'प्यान दर्ता', roomNo: 'Room-102', roomNoNp: 'कोठा-१०२',
-      duration: 30, color: '#2563eb', customFields: [{ name: 'citizenship', label: 'Citizenship No', type: 'text', required: true }]
+      duration: 30, color: '#2563eb',
+      customFields: [{ name: 'citizenship', label: 'Citizenship No', type: 'text', required: true }],
+      requiredDocuments: [
+        { name: 'Citizenship certificate (original + 1 copy)', nameNp: 'नागरिकताको प्रमाणपत्र (सक्कल र १ प्रति)', isMandatory: true },
+        { name: 'Passport-size photo (2 copies)', nameNp: 'पासपोर्ट साइज फोटो (२ प्रति)', isMandatory: true },
+        { name: 'Business registration (if applicable)', nameNp: 'व्यवसाय दर्ता (व्यवसायिक भए)', isMandatory: false },
+      ],
+      eligibility: 'Nepali citizens aged 16 and above',
+      eligibilityNp: '१६ वर्ष माथिका नेपाली नागरिकहरू',
+      feeBreakdown: [
+        { label: 'PAN registration fee', labelNp: 'प्यान दर्ता शुल्क', amount: 0 },
+        { label: 'Service charge', labelNp: 'सेवा शुल्क', amount: 50 },
+      ],
+      processingTimeDays: 1,
+      processingTimeNote: 'Same-day issuance if all documents are in order.',
+      instructions: 'Arrive 15 minutes early. Mobile devices must be silent inside the office.',
+      instructionsNp: 'समयभन्दा १५ मिनेट अगाडि आइपुग्नुहोला। कार्यालय भित्र मोबाइल साइलेन्ट गर्नुहोला।',
     });
     const irdTax = await AppointmentType.create({
       organization: irdOrg._id, name: 'Tax Consultation', nameNp: 'कर परामर्श', roomNo: 'Section B', roomNoNp: 'खण्ड ख',
@@ -217,6 +236,63 @@ const seed = async () => {
       { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'Booking Confirmed - {{refCode}}', bodyTemplate: 'Hello {{name}}, your appointment is confirmed for {{date}} at {{time}}.', language: 'en' },
       { organization: irdOrg._id, type: 'booking_confirmed', channel: 'email', subject: 'बुकिङ पुष्टि - {{refCode}}', bodyTemplate: 'नमस्ते {{name}}, तपाईंको बुकिङ {{date}} {{time}} मा सुनिश्चित भएको छ।', language: 'ne' },
     ]);
+
+    // --- 6. Ticketing/DITMS Data Seed ---
+    console.log('Generating Issue Tracking definitions.');
+    const complaintType = await IssueType.create({
+        name: 'General Service Complaint',
+        nameNp: 'सामान्य सेवा गुनासो',
+        slug: 'general-complaint',
+        description: 'Raise complaints regarding queue wait times or staff behavior',
+        organization: irdOrg._id,
+        defaultBranch: irdKtm._id,
+        priority: 'medium',
+        requiresAppointment: false,
+        estimatedSLA: 48,
+        slaHours: 48,
+        isActive: true
+    });
+    const technicalType = await IssueType.create({
+        name: 'Portal Technical Error',
+        nameNp: 'पोर्टल प्राविधिक त्रुटि',
+        slug: 'portal-technical-error',
+        description: 'Report technical glitches like OTP failures or booking errors',
+        organization: irdOrg._id,
+        priority: 'high',
+        requiresAppointment: false,
+        estimatedSLA: 24,
+        slaHours: 24,
+        isActive: true
+    });
+    const documentType = await IssueType.create({
+        name: 'Document Request',
+        nameNp: 'कागजात अनुरोध',
+        slug: 'document-request',
+        description: 'Request a re-issue or correction of an official document',
+        organization: irdOrg._id,
+        defaultBranch: irdKtm._id,
+        priority: 'medium',
+        requiresAppointment: true,
+        estimatedSLA: 72,
+        slaHours: 72,
+        isActive: true
+    });
+
+    await Issue.create({
+        issueType: complaintType._id,
+        organization: irdOrg._id,
+        branch: irdKtm._id,
+        status: 'open',
+        guestName: 'Rita Sharma',
+        guestEmail: 'rita@gmail.com',
+        description: 'I waited 2 hours yesterday for my PAN registration appointment but was never called. Please look into this.',
+        subject: 'Long wait time at IRD Lazimpat',
+        sourceChannel: 'portal',
+        priority: 'high',
+        slaStartTime: new Date(),
+        slaDueDate: new Date(Date.now() + 48 * 3600000),
+        history: [{ action: 'created', toStatus: 'open', actorName: 'Rita Sharma', reason: 'Ticket submitted' }]
+    });
 
     console.log('\n=== SEED DATA CREATED ===');
     console.log('Historical Data: 40 appointments created for Admin Charts');

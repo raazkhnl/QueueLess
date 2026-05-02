@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/appointmentController');
 const { authenticate, optionalAuth, authorize } = require('../middleware/auth');
+const { honeypot } = require('../middleware/honeypot');
 
 router.get('/slots', ctrl.getSlots);
-router.post('/book', optionalAuth, ctrl.book);
+router.post('/book', honeypot, optionalAuth, ctrl.book);
 router.get('/my-contact', optionalAuth, ctrl.getMyByContact);
 router.get('/ref/:refCode', ctrl.getByRefCode);
 router.get('/ref/:refCode/pdf', ctrl.downloadPDFByRef);

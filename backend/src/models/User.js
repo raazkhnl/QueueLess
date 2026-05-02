@@ -13,6 +13,31 @@ const userSchema = new mongoose.Schema({
   },
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
+
+  // National identity — used for closed-loop integration with gov portals,
+  // dedupe, fee-waiver eligibility, and PDF receipts.
+  citizenshipNumber: { type: String, trim: true, index: true, sparse: true },
+  citizenshipIssuedDistrict: { type: String, trim: true },
+  nationalId: { type: String, trim: true, index: true, sparse: true },
+  panNumber: { type: String, trim: true, uppercase: true, index: true, sparse: true },
+  dateOfBirth: { type: Date },
+  gender: { type: String, enum: ['male', 'female', 'other', 'prefer_not_to_say'] },
+  preferredLanguage: { type: String, enum: ['en', 'ne'], default: 'en' },
+  address: {
+    province: { type: String },
+    district: { type: String },
+    municipality: { type: String },
+    ward: { type: String },
+    tole: { type: String },
+  },
+
+  currentUnit: { type: String, description: "String indicating SubUnit code/name context" },
+  // Officer rank — drives approval-chain routing in Issue workflow.
+  // Higher rankLevel = more senior. Free-text label for Nepal civil-service grades.
+  rank: { type: String },
+  rankLevel: { type: Number, default: 0, min: 0, max: 20 },
+  reportsTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  delegations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   specializations: [{ type: String }],
   expertise: { type: String },
   bio: { type: String, maxlength: 500 },

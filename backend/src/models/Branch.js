@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const subUnitSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  code: { type: String, uppercase: true },
+  type: { type: String, enum: ['Division', 'Section', 'Subsection', 'Office', 'Other'], default: 'Other' },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+});
+subUnitSchema.add({ subUnits: [subUnitSchema] });
+
 const workingHoursSchema = new mongoose.Schema({
   day: { type: Number, required: true, min: 0, max: 6 }, // 0=Sun, 6=Sat
   isOpen: { type: Boolean, default: true },
@@ -54,6 +62,7 @@ const branchSchema = new mongoose.Schema({
   maxConcurrentBookings: { type: Number, default: 5 },
   isActive: { type: Boolean, default: true },
   managers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  subUnits: [subUnitSchema],
 }, { timestamps: true });
 
 branchSchema.index({ location: '2dsphere' });

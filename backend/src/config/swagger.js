@@ -121,6 +121,44 @@ const options = {
             errors: { type: 'array', items: { type: 'string' } },
           },
         },
+        IssueType: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string' }, name: { type: 'string' }, nameNp: { type: 'string' },
+            slug: { type: 'string' }, description: { type: 'string' },
+            organization: { type: 'string' }, defaultBranch: { type: 'string' }, defaultUnit: { type: 'string' },
+            priority: { type: 'string', enum: ['low','medium','high','critical'] },
+            slaHours: { type: 'number' }, estimatedSLA: { type: 'number' },
+            requiresAppointment: { type: 'boolean' }, isActive: { type: 'boolean' },
+            customFields: { type: 'array', items: { type: 'object' } },
+            requiredFields: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        Issue: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string' }, refCode: { type: 'string' },
+            issueType: { type: 'string' }, organization: { type: 'string' }, branch: { type: 'string' },
+            status: { type: 'string', enum: ['open','in_progress','forwarded','escalated','awaiting_user','resolved','closed','reopened'] },
+            priority: { type: 'string', enum: ['low','medium','high','critical'] },
+            citizen: { type: 'string' },
+            guestName: { type: 'string' }, guestEmail: { type: 'string' }, guestPhone: { type: 'string' },
+            subject: { type: 'string' }, description: { type: 'string' }, remarks: { type: 'string' },
+            sourceChannel: { type: 'string', enum: ['portal','email','phone','in_person','external'] },
+            currentAssignee: { type: 'string' }, currentUnit: { type: 'string' },
+            slaStartTime: { type: 'string', format: 'date-time' },
+            slaDueDate: { type: 'string', format: 'date-time' },
+            linkedAppointments: { type: 'array', items: { type: 'string' } },
+            attachments: { type: 'array', items: { type: 'object' } },
+            comments: { type: 'array', items: { type: 'object' } },
+            history: { type: 'array', items: { type: 'object' } },
+            resolutionNote: { type: 'string' }, resolvedAt: { type: 'string', format: 'date-time' },
+            closedAt: { type: 'string', format: 'date-time' }, reopenCount: { type: 'number' },
+            externalSubmissionNo: { type: 'string', description: 'Reference ID from originating portal' },
+            sourceSystem: { type: 'string', description: 'Identifier of the originating portal' },
+            createdAt: { type: 'string', format: 'date-time' }, updatedAt: { type: 'string', format: 'date-time' }
+          }
+        }
       },
       responses: {
         Unauthorized: { description: 'Authentication required or token invalid', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
@@ -142,6 +180,7 @@ const options = {
       { name: 'Notifications', description: 'Email/SMS notification management' },
       { name: 'Staff', description: 'Staff scheduling and availability' },
       { name: 'Config', description: 'App configuration and audit logs' },
+      { name: 'Ticketing/DITMS', description: 'Dynamic Issue, Grievance, and Hybrid Link routing' }
     ],
     paths: {
       // ─── Auth ───────────────────────────────────────
@@ -243,6 +282,56 @@ const options = {
       '/messages/appointment/{appointmentId}': { get: { tags: ['Appointments'], summary: 'Get appointment messages' } },
       '/messages': { post: { tags: ['Appointments'], summary: 'Send message on appointment' } },
       '/messages/read/{appointmentId}': { put: { tags: ['Appointments'], summary: 'Mark messages as read' } },
+
+      // ─── Ticketing/DITMS ────────────────────────────
+      '/issue-types': {
+        get: { tags: ['Ticketing/DITMS'], summary: 'List active issue categories (public, optional org filter)', parameters: [{ in: 'query', name: 'organization', schema: { type: 'string' }, description: 'Restrict to a single organization' }] },
+        post: { tags: ['Ticketing/DITMS'], summary: 'Create issue category', security: [{ bearerAuth: [] }], requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/IssueType' } } } } }
+      },
+      '/issue-types/slug/{slug}': { get: { tags: ['Ticketing/DITMS'], summary: 'Resolve an issue type by slug (for external portal deep links)', parameters: [{ in: 'path', name: 'slug', required: true, schema: { type: 'string' } }] } },
+      '/issue-types/admin': { get: { tags: ['Ticketing/DITMS'], summary: 'List all issue categories including inactive (admin)', security: [{ bearerAuth: [] }] } },
+      '/issue-types/{id}': {
+        put: { tags: ['Ticketing/DITMS'], summary: 'Update issue category', security: [{ bearerAuth: [] }] },
+        delete: { tags: ['Ticketing/DITMS'], summary: 'Soft-delete (deactivate) issue category', security: [{ bearerAuth: [] }] }
+      },
+      '/issues': {
+        get: { tags: ['Ticketing/DITMS'], summary: 'List tickets (admin/staff, role-scoped, with filters)', security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'status', schema: { type: 'string' } },
+            { in: 'query', name: 'priority', schema: { type: 'string' } },
+            { in: 'query', name: 'branch', schema: { type: 'string' } },
+            { in: 'query', name: 'organization', schema: { type: 'string' } },
+            { in: 'query', name: 'issueType', schema: { type: 'string' } },
+            { in: 'query', name: 'assignee', schema: { type: 'string' } },
+            { in: 'query', name: 'search', schema: { type: 'string' } },
+            { in: 'query', name: 'page', schema: { type: 'number' } },
+            { in: 'query', name: 'limit', schema: { type: 'number' } }
+          ]
+        },
+        post: { tags: ['Ticketing/DITMS'], summary: 'Submit a new ticket (public; auth optional). Supports closed-loop integration via externalSubmissionNo + sourceSystem.', requestBody: { content: { 'multipart/form-data': { schema: { type: 'object', required: ['description'], properties: {
+          description: { type: 'string' }, subject: { type: 'string' },
+          issueType: { type: 'string', description: 'IssueType ObjectId' },
+          issueTypeSlug: { type: 'string', description: 'Alternative to issueType — resolved server-side' },
+          priority: { type: 'string', enum: ['low','medium','high','critical'] },
+          branch: { type: 'string' },
+          guestName: { type: 'string' }, guestEmail: { type: 'string' }, guestPhone: { type: 'string' },
+          linkedAppointments: { type: 'string', description: 'Appointment _id or refCode' },
+          externalSubmissionNo: { type: 'string', description: 'Reference ID from originating portal' },
+          sourceSystem: { type: 'string', description: 'Originating portal identifier' },
+          attachments: { type: 'array', items: { type: 'string', format: 'binary' } }
+        } } } } } }
+      },
+      '/issues/track/{refCode}': { get: { tags: ['Ticketing/DITMS'], summary: 'Track ticket by refCode (public; redacts internal notes for non-owners)', parameters: [{ in: 'path', name: 'refCode', required: true, schema: { type: 'string' } }] } },
+      '/issues/my': { get: { tags: ['Ticketing/DITMS'], summary: 'List tickets owned by the current citizen', security: [{ bearerAuth: [] }] } },
+      '/issues/{id}': { get: { tags: ['Ticketing/DITMS'], summary: 'Get ticket detail (owner, staff, or admin)', parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }] } },
+      '/issues/{id}/status': { put: { tags: ['Ticketing/DITMS'], summary: 'Update ticket status', security: [{ bearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['status'], properties: { status: { type: 'string', enum: ['open','in_progress','forwarded','escalated','awaiting_user','resolved','closed','reopened'] }, reason: { type: 'string' } } } } } } } },
+      '/issues/{id}/forward': { put: { tags: ['Ticketing/DITMS'], summary: 'Forward a ticket to another assignee/branch/unit', security: [{ bearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['reason'], properties: { toAssignee: { type: 'string' }, toBranch: { type: 'string' }, toUnit: { type: 'string' }, reason: { type: 'string' } } } } } } } },
+      '/issues/{id}/assign': { put: { tags: ['Ticketing/DITMS'], summary: 'Assign a ticket to a staff member', security: [{ bearerAuth: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['assignee'], properties: { assignee: { type: 'string' }, reason: { type: 'string' } } } } } } } },
+      '/issues/{id}/reopen': { put: { tags: ['Ticketing/DITMS'], summary: 'Reopen a resolved/closed ticket (owner or staff)', security: [{ bearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } } } } } },
+      '/issues/{id}/comments': { post: { tags: ['Ticketing/DITMS'], summary: 'Add a comment (with optional attachments). Staff may flag as internal note.', security: [{ bearerAuth: [] }], requestBody: { content: { 'multipart/form-data': { schema: { type: 'object', required: ['body'], properties: { body: { type: 'string' }, isInternal: { type: 'boolean' }, attachments: { type: 'array', items: { type: 'string', format: 'binary' } } } } } } } } },
+      '/issues/{id}/attachments': { post: { tags: ['Ticketing/DITMS'], summary: 'Attach more files to an existing ticket', security: [{ bearerAuth: [] }], requestBody: { content: { 'multipart/form-data': { schema: { type: 'object', properties: { attachments: { type: 'array', items: { type: 'string', format: 'binary' } } } } } } } } },
+      '/hybrid/link': { post: { tags: ['Ticketing/DITMS'], summary: 'Bidirectionally link a ticket to an appointment', security: [{ bearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['issueId','appointmentId'], properties: { issueId: { type: 'string' }, appointmentId: { type: 'string' } } } } } } } },
+      '/hybrid/timeline/{type}/{id}': { get: { tags: ['Ticketing/DITMS'], summary: 'Unified merged timeline of issue + linked appointments', parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['issue','appointment'] } }, { in: 'path', name: 'id', required: true, schema: { type: 'string' } }] } },
 
       // ─── Health ─────────────────────────────────────
       '/health': { get: { tags: ['Config'], summary: 'Health check with MongoDB status', responses: { 200: { description: 'Healthy', content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['ok','degraded'] }, database: { type: 'string' }, version: { type: 'string' }, uptime: { type: 'number' } } } } } }, 503: { description: 'Degraded — database disconnected' } } } },

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
-  appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true },
+  appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
+  issue: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', required: true },
   citizen: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

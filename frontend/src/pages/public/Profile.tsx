@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
-import { User, Mail, Phone, Lock, Save, Shield, Building2, GitBranch, Calendar, Clock } from 'lucide-react';
-import { authAPI, appointmentAPI } from '../../lib/api';
+import { Link, Navigate } from 'react-router-dom';
+import { User, Mail, Phone, Lock, Save, Shield, Building2, GitBranch, Calendar, AlertCircle } from 'lucide-react';
+import { authAPI, appointmentAPI, issueAPI, paymentAPI, geoAPI, meAPI } from '../../lib/api';
+import { downloadBlob } from '../../lib/utils';
 import { useAuthStore } from '../../store/authStore';
 import { roleLabels, formatDate, formatTime, statusColors } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -9,12 +10,32 @@ import { useI18n } from '../../lib/i18n';
 
 export default function Profile() {
   const { user, isAuthenticated, updateUser } = useAuthStore();
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '' });
+  const [form, setForm] = useState({
+    name: user?.name || '', email: user?.email || '', phone: user?.phone || '',
+    citizenshipNumber: (user as any)?.citizenshipNumber || '',
+    citizenshipIssuedDistrict: (user as any)?.citizenshipIssuedDistrict || '',
+    nationalId: (user as any)?.nationalId || '',
+    panNumber: (user as any)?.panNumber || '',
+    dateOfBirth: (user as any)?.dateOfBirth ? String((user as any).dateOfBirth).slice(0, 10) : '',
+    gender: (user as any)?.gender || '',
+    preferredLanguage: (user as any)?.preferredLanguage || 'en',
+    address: {
+      province: (user as any)?.address?.province || '',
+      district: (user as any)?.address?.district || '',
+      municipality: (user as any)?.address?.municipality || '',
+      ward: (user as any)?.address?.ward || '',
+      tole: (user as any)?.address?.tole || '',
+    },
+  });
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
+  const [recentIssues, setRecentIssues] = useState<any[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [bsToday, setBsToday] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('profile');
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -25,10 +46,31 @@ export default function Profile() {
   useEffect(() => {
     if (isCitizen) {
       appointmentAPI.getAll({ limit: 5 }).then(r => setRecentBookings(r.data.appointments)).catch(() => {}).finally(() => setBookingsLoading(false));
+      issueAPI.getMy().then(r => setRecentIssues((r.data.data || []).slice(0, 5))).catch(() => {}).finally(() => setIssuesLoading(false));
+      paymentAPI.myPayments().then(r => setRecentPayments((r.data.data || []).slice(0, 5))).catch(() => {});
     } else {
       setBookingsLoading(false);
+      setIssuesLoading(false);
     }
+    geoAPI.todayBs().then((r) => setBsToday(r.data)).catch(() => {});
   }, []);
+
+  const handleExport = async () => {
+    try {
+      const r = await meAPI.exportData();
+      downloadBlob(r.data, `queueless-data-${Date.now()}.json`);
+      toast.success('Your data has been downloaded');
+    } catch { toast.error('Export failed'); }
+  };
+  const handleErase = async () => {
+    if (!confirm('This will anonymise all your personal data. You will be logged out and unable to access this account again. Continue?')) return;
+    try {
+      await meAPI.erase();
+      toast.success('Personal data erased. Logging out…');
+      localStorage.clear();
+      setTimeout(() => { window.location.href = '/'; }, 1500);
+    } catch (err: any) { toast.error(err.response?.data?.message || 'Erase failed'); }
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
@@ -55,8 +97,16 @@ export default function Profile() {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     ...(isCitizen ? [{ id: 'bookings', label: 'Recent Bookings', icon: Calendar }] : []),
+    ...(isCitizen ? [{ id: 'tickets', label: 'My Tickets', icon: AlertCircle }] : []),
     ...(isAdmin ? [{ id: 'role', label: 'Role & Access', icon: Shield }] : []),
   ];
+
+  const SummaryStat = ({ label, value, small }: { label: string; value: any; small?: boolean }) => (
+    <div className="card p-3">
+      <p className="text-xs text-slate-500 uppercase tracking-wider">{label}</p>
+      <p className={small ? 'text-sm font-mono text-slate-700 dark:text-slate-200 truncate' : 'text-2xl font-bold text-slate-900 dark:text-white'}>{value ?? '—'}</p>
+    </div>
+  );
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
@@ -78,6 +128,16 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Citizen at-a-glance summary */}
+      {isCitizen && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <SummaryStat label="Appointments" value={recentBookings.length} />
+          <SummaryStat label="Tickets" value={recentIssues.length} />
+          <SummaryStat label="Payments" value={recentPayments.length} />
+          <SummaryStat label={bsToday ? `Today (BS)` : 'Today'} value={bsToday ? bsToday.formatted?.en : new Date().toLocaleDateString()} small />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 overflow-x-auto">
@@ -103,6 +163,50 @@ export default function Profile() {
           <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Phone</label>
           <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="input-field pl-10" placeholder="+977 98XXXXXXXX" /></div></div>
+
+          {isCitizen && (
+            <>
+              <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200 mb-3">National Identity (नागरिक परिचय)</h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Citizenship No. (नागरिकता नं.)</label>
+                    <input value={form.citizenshipNumber} onChange={e => setForm({ ...form, citizenshipNumber: e.target.value })} className="input-field" placeholder="e.g. 12-34-56-78901" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Issued District (जारी जिल्ला)</label>
+                    <input value={form.citizenshipIssuedDistrict} onChange={e => setForm({ ...form, citizenshipIssuedDistrict: e.target.value })} className="input-field" placeholder="e.g. Kathmandu" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">National ID (राष्ट्रिय परिचयपत्र नं.)</label>
+                    <input value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} className="input-field" placeholder="Optional" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">PAN (प्यान नं.)</label>
+                    <input value={form.panNumber} onChange={e => setForm({ ...form, panNumber: e.target.value.toUpperCase() })} className="input-field" placeholder="Optional, 9 digits" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Date of Birth (AD)</label>
+                    <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} className="input-field" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Gender</label>
+                    <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })} className="input-field">
+                      <option value="">Prefer not to say</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select></div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200 mb-3">Address (ठेगाना)</h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Province (प्रदेश)</label>
+                    <input value={form.address.province} onChange={e => setForm({ ...form, address: { ...form.address, province: e.target.value } })} className="input-field" placeholder="e.g. Bagmati" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">District (जिल्ला)</label>
+                    <input value={form.address.district} onChange={e => setForm({ ...form, address: { ...form.address, district: e.target.value } })} className="input-field" placeholder="e.g. Kathmandu" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Municipality / Palika (पालिका)</label>
+                    <input value={form.address.municipality} onChange={e => setForm({ ...form, address: { ...form.address, municipality: e.target.value } })} className="input-field" /></div>
+                  <div><label className="block text-xs font-medium text-slate-600 mb-1">Ward (वडा)</label>
+                    <input value={form.address.ward} onChange={e => setForm({ ...form, address: { ...form.address, ward: e.target.value } })} className="input-field" /></div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-600 mb-1">Tole / Locality (टोल)</label>
+                    <input value={form.address.tole} onChange={e => setForm({ ...form, address: { ...form.address, tole: e.target.value } })} className="input-field" /></div>
+                </div>
+              </div>
+            </>
+          )}
+
           <button type="submit" disabled={loading} className="btn-primary"><Save className="w-4 h-4" />{loading ? 'Saving...' : 'Save Changes'}</button>
         </form>
       )}
@@ -121,6 +225,17 @@ export default function Profile() {
           <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="password" value={pw.confirm} onChange={e => setPw({...pw, confirm: e.target.value})} className="input-field pl-10" required /></div></div>
           <button type="submit" disabled={loading} className="btn-secondary"><Lock className="w-4 h-4" />Change Password</button>
+
+          {isCitizen && (
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-4">
+              <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200 mb-2">Your data</h4>
+              <p className="text-xs text-slate-500 mb-3">Download everything we hold about you, or request anonymised erasure (right to portability + erasure).</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={handleExport} className="btn-secondary btn-sm">Download my data</button>
+                <button type="button" onClick={handleErase} className="btn-secondary btn-sm text-rose-600 border-rose-200 hover:bg-rose-50">Erase my account</button>
+              </div>
+            </div>
+          )}
         </form>
       )}
 
@@ -140,6 +255,37 @@ export default function Profile() {
               </div>
               <span className={statusColors[a.status] + ' text-[10px]'}>{a.status.replace('_',' ')}</span>
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tickets tab (citizens only) */}
+      {activeTab === 'tickets' && isCitizen && (
+        <div className="animate-fade-in space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-slate-500">Latest 5 tickets</p>
+            <Link to="/my-issues" className="text-xs text-primary-600 hover:underline">View all</Link>
+          </div>
+          {issuesLoading ? <p className="text-slate-400 text-center py-8">Loading...</p> :
+          recentIssues.length === 0 ? (
+            <div className="card p-8 text-center">
+              <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-400 mb-3">No tickets yet</p>
+              <Link to="/issue/submit" className="btn-primary btn-sm">Raise a ticket</Link>
+            </div>
+          ) :
+          recentIssues.map(i => (
+            <Link key={i._id} to={`/issue/track/${i.refCode}`} className="card p-4 flex items-center gap-4 hover:border-primary-200">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-600">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-mono text-xs text-slate-500">{i.refCode}</p>
+                <p className="font-medium text-sm truncate">{i.subject || i.issueType?.name || 'Ticket'}</p>
+                <p className="text-xs text-slate-500 truncate">{i.organization?.name}{i.branch?.name ? ` · ${i.branch.name}` : ''}</p>
+              </div>
+              <span className="text-[10px] uppercase font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{(i.status || '').replace('_', ' ')}</span>
+            </Link>
           ))}
         </div>
       )}

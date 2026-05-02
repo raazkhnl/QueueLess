@@ -38,6 +38,26 @@ const appointmentTypeSchema = new mongoose.Schema({
   color: { type: String, default: '#2563eb' },
   icon: { type: String, default: 'calendar' },
   customFields: [customFieldSchema],
+
+  // Service requirements surfaced to citizens before booking — gov-grade transparency.
+  requiredDocuments: [{
+    name: { type: String, required: true },
+    nameNp: { type: String },
+    description: { type: String },
+    isMandatory: { type: Boolean, default: true },
+  }],
+  eligibility: { type: String },
+  eligibilityNp: { type: String },
+  feeBreakdown: [{
+    label: { type: String, required: true },
+    labelNp: { type: String },
+    amount: { type: Number, required: true },
+  }],
+  processingTimeDays: { type: Number, default: 0 },
+  processingTimeNote: { type: String },
+  instructions: { type: String },
+  instructionsNp: { type: String },
+
   maxBookingsPerSlot: { type: Number, default: 1 },
   requiresApproval: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },

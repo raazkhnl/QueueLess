@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const subUnitSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  code: { type: String, uppercase: true },
+  type: { type: String, enum: ['Division', 'Section', 'Subsection', 'Office', 'Other'], default: 'Other' },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+});
+subUnitSchema.add({ subUnits: [subUnitSchema] });
+
 const organizationSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   nameNp: { type: String, trim: true },
@@ -31,8 +39,14 @@ const organizationSchema = new mongoose.Schema({
     reminderHoursBefore: { type: Number, default: 24 },
   },
   isActive: { type: Boolean, default: true },
+  // Tenant lifecycle. Self-onboarded orgs land in 'pending_review'; super-admin
+  // activates them once verified (gov letter, registration certificate, etc.).
+  status: { type: String, enum: ['active', 'pending_review', 'suspended', 'archived'], default: 'active' },
+  verifiedAt: { type: Date },
+  verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   keywords: { type: [String], index: true },
+  subUnits: [subUnitSchema],
 }, { timestamps: true });
 
 organizationSchema.pre('validate', function(next) {

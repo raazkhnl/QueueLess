@@ -133,11 +133,31 @@ exports.getMe = async (req, res) => {
 // Update profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone,
+      citizenshipNumber, citizenshipIssuedDistrict, nationalId, panNumber,
+      dateOfBirth, gender, preferredLanguage, address, bio,
+    } = req.body;
     const user = await User.findById(req.user._id);
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (phone) user.phone = phone;
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = phone;
+    if (citizenshipNumber !== undefined) user.citizenshipNumber = citizenshipNumber || undefined;
+    if (citizenshipIssuedDistrict !== undefined) user.citizenshipIssuedDistrict = citizenshipIssuedDistrict || undefined;
+    if (nationalId !== undefined) user.nationalId = nationalId || undefined;
+    if (panNumber !== undefined) user.panNumber = panNumber ? String(panNumber).toUpperCase() : undefined;
+    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth || undefined;
+    if (gender !== undefined) user.gender = gender || undefined;
+    if (preferredLanguage !== undefined && ['en', 'ne'].includes(preferredLanguage)) user.preferredLanguage = preferredLanguage;
+    if (bio !== undefined) user.bio = bio;
+    if (address && typeof address === 'object') {
+      user.address = {
+        province: address.province || user.address?.province,
+        district: address.district || user.address?.district,
+        municipality: address.municipality || user.address?.municipality,
+        ward: address.ward || user.address?.ward,
+        tole: address.tole || user.address?.tole,
+      };
+    }
     await user.save();
     res.json({ user });
   } catch (error) {

@@ -13,6 +13,13 @@ const BookingWizard = lazy(() => import('./pages/public/BookingWizard'));
 const AppointmentDetail = lazy(() => import('./pages/public/AppointmentDetail'));
 const MyAppointments = lazy(() => import('./pages/public/MyAppointments'));
 const Profile = lazy(() => import('./pages/public/Profile'));
+const IssueWizard = lazy(() => import('./pages/public/IssueWizard'));
+const TicketTracking = lazy(() => import('./pages/public/TicketTracking'));
+const MyIssues = lazy(() => import('./pages/public/MyIssues'));
+const Services = lazy(() => import('./pages/public/Services'));
+const Display = lazy(() => import('./pages/public/Display'));
+const CheckIn = lazy(() => import('./pages/admin/CheckIn'));
+const Transparency = lazy(() => import('./pages/public/Transparency'));
 
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const Bookings = lazy(() => import('./pages/admin/Bookings'));
@@ -30,6 +37,7 @@ const NotificationTemplates = lazy(() => import('./pages/admin/NotificationTempl
 const AppConfigPage = lazy(() => import('./pages/admin/AppConfigPage'));
 const AuditLogs = lazy(() => import('./pages/admin/AuditLogs'));
 const StaffScheduling = lazy(() => import('./pages/admin/StaffScheduling'));
+const IssueManagement = lazy(() => import('./pages/admin/IssueManagement'));
 
 function PageLoader() {
   return (
@@ -75,6 +83,12 @@ export default function App() {
           <Route path="/appointments/:refCode" element={<PublicLayout><AppointmentDetail /></PublicLayout>} />
           <Route path="/my-appointments" element={<PublicLayout><MyAppointments /></PublicLayout>} />
           <Route path="/profile" element={<PublicLayout><Profile /></PublicLayout>} />
+          <Route path="/issue/submit" element={<PublicLayout><IssueWizard /></PublicLayout>} />
+          <Route path="/issue/track/:refCode" element={<PublicLayout><TicketTracking /></PublicLayout>} />
+          <Route path="/my-issues" element={<PublicLayout><MyIssues /></PublicLayout>} />
+          <Route path="/services" element={<PublicLayout><Services /></PublicLayout>} />
+          <Route path="/display/:code" element={<Suspense fallback={<PageLoader />}><Display /></Suspense>} />
+          <Route path="/transparency" element={<PublicLayout><Transparency /></PublicLayout>} />
 
           {/* Admin */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -87,6 +101,8 @@ export default function App() {
             <Route path="reports" element={<Suspense fallback={<PageLoader />}><Reports /></Suspense>} />
             <Route path="users" element={<Suspense fallback={<PageLoader />}><Users /></Suspense>} />
             <Route path="staff-scheduling" element={<Suspense fallback={<PageLoader />}><StaffScheduling /></Suspense>} />
+            <Route path="issues" element={<Suspense fallback={<PageLoader />}><IssueManagement /></Suspense>} />
+            <Route path="check-in" element={<Suspense fallback={<PageLoader />}><CheckIn /></Suspense>} />
             <Route path="feedback" element={<Suspense fallback={<PageLoader />}><FeedbackPage /></Suspense>} />
             <Route path="bulk-upload" element={<Suspense fallback={<PageLoader />}><BulkUpload /></Suspense>} />
             <Route path="webhooks" element={<Suspense fallback={<PageLoader />}><Webhooks /></Suspense>} />

@@ -98,7 +98,28 @@ exports.book = async (req, res, next) => {
       return res.status(403).json({ message: 'This organization does not allow guest bookings. Please create an account.' });
     }
 
-    if (req.user) {
+    // Staff booking on behalf of a walk-in citizen: req.body.onBehalf=true and the
+    // staff supplies guestName + guestEmail/guestPhone. The appointment is recorded
+    // with bookedBy=staff, citizen unset, isGuest=true, and sourceChannel=in_person
+    // for downstream analytics (counter throughput vs self-service).
+    const isStaffOnBehalf = req.user && ['super_admin','org_admin','branch_manager','staff'].includes(req.user.role) && req.body.onBehalf;
+
+    if (isStaffOnBehalf) {
+      if (!guestName || (!guestEmail && !guestPhone)) {
+        return res.status(400).json({ message: 'On-behalf bookings need citizen name and email/phone' });
+      }
+      appointmentData.guestName = guestName;
+      appointmentData.guestEmail = guestEmail;
+      appointmentData.guestPhone = guestPhone;
+      appointmentData.bookedBy = req.user._id;
+      appointmentData.isGuest = true;
+      appointmentData.sourceChannel = 'in_person';
+    } else if (req.user && req.user.role === 'citizen') {
+      appointmentData.citizen = req.user._id;
+      appointmentData.bookedBy = req.user._id;
+      appointmentData.isGuest = false;
+    } else if (req.user) {
+      // Authenticated non-citizen booking for self (rare) — treat as citizen
       appointmentData.citizen = req.user._id;
       appointmentData.bookedBy = req.user._id;
       appointmentData.isGuest = false;
@@ -218,10 +239,12 @@ exports.getMyByContact = async (req, res, next) => {
 
 exports.getByRefCode = async (req, res, next) => {
   try {
-    const appointment = await Appointment.findOne({ refCode: req.params.refCode })
+    // Accept either internal refCode (QL-…) or gov-style file number (BC/FY/SEQ).
+    const code = req.params.refCode;
+    const appointment = await Appointment.findOne({ $or: [{ refCode: code }, { fileNumber: code }] })
       .populate('organization', 'name slug branding email phone address')
       .populate('branch', 'name address location phone email')
-      .populate('appointmentType', 'name description duration price mode color icon customFields')
+      .populate('appointmentType', 'name description duration price mode color icon customFields requiredDocuments feeBreakdown processingTimeDays instructions')
       .populate('citizen', 'name email phone')
       .populate('assignedStaff', 'name');
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });

@@ -51,6 +51,7 @@ export const branchAPI = {
 };
 export const apptTypeAPI = {
   getPublicByOrg: (orgId: string, p?: any) => api.get(`/appointment-types/public/org/${orgId}`, { params: p }),
+  getPublicCatalogue: (p?: any) => api.get('/appointment-types/public/catalogue', { params: p }),
   getBySlug: (slug: string) => api.get(`/appointment-types/slug/${slug}`),
   getAll: (p?: any) => api.get('/appointment-types', { params: p }),
   getById: (id: string) => api.get(`/appointment-types/${id}`),
@@ -135,6 +136,76 @@ export const messageAPI = {
   getByAppointment: (aptId: string) => api.get(`/messages/appointment/${aptId}`),
   create: (data: any) => api.post('/messages', data),
   markRead: (aptId: string, data?: any) => api.put(`/messages/read/${aptId}`, data),
+};
+
+export const issueTypeAPI = {
+  getPublic: (p?: any) => api.get('/issue-types', { params: p }),
+  getBySlug: (slug: string) => api.get(`/issue-types/slug/${slug}`),
+  getAll: (p?: any) => api.get('/issue-types/admin', { params: p }),
+  create: (d: any) => api.post('/issue-types', d),
+  update: (id: string, d: any) => api.put(`/issue-types/${id}`, d),
+  remove: (id: string) => api.delete(`/issue-types/${id}`),
+};
+
+export const issueAPI = {
+  submit: (fd: FormData) => api.post('/issues', fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getTracking: (refCode: string) => api.get(`/issues/track/${refCode}`),
+  getById: (id: string) => api.get(`/issues/${id}`),
+  getMy: () => api.get('/issues/my'),
+  adminGetAll: (p?: any) => api.get('/issues', { params: p }),
+  forward: (id: string, d: any) => api.put(`/issues/${id}/forward`, d),
+  assign: (id: string, d: any) => api.put(`/issues/${id}/assign`, d),
+  updateStatus: (id: string, d: any) => api.put(`/issues/${id}/status`, d),
+  reopen: (id: string, d: any) => api.put(`/issues/${id}/reopen`, d),
+  addComment: (id: string, fd: FormData) => api.post(`/issues/${id}/comments`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  addAttachments: (id: string, fd: FormData) => api.post(`/issues/${id}/attachments`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  bulkStatus: (ids: string[], status: string, reason?: string) => api.post('/issues/bulk/status', { ids, status, reason }),
+  bulkAssign: (ids: string[], assignee: string, reason?: string) => api.post('/issues/bulk/assign', { ids, assignee, reason }),
+  bulkForward: (ids: string[], d: any) => api.post('/issues/bulk/forward', { ids, ...d }),
+  statsSummary: () => api.get('/issues/stats/summary'),
+};
+
+export const tenantAPI = {
+  onboard: (d: any) => api.post('/tenants/onboard', d),
+  activate: (id: string) => api.put(`/tenants/${id}/activate`),
+  suspend: (id: string) => api.put(`/tenants/${id}/suspend`),
+  uploadLogo: (id: string, fd: FormData) => api.put(`/tenants/${id}/logo`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  listTokens: (orgId: string) => api.get(`/tenants/${orgId}/tokens`),
+  mintToken: (orgId: string, d: any) => api.post(`/tenants/${orgId}/tokens`, d),
+  revokeToken: (tokenId: string) => api.delete(`/tenants/tokens/${tokenId}`),
+};
+
+export const meAPI = {
+  exportData: () => api.get('/me/export', { responseType: 'blob' }),
+  erase: () => api.post('/me/erase', { confirm: 'ERASE' }),
+};
+
+export const sloAPI = { get: () => api.get('/admin/slo') };
+export const transparencyAPI = { get: (organization?: string) => api.get('/transparency', { params: { organization } }) };
+export const impersonateAPI = { begin: (userId: string) => api.post(`/admin/impersonate/${userId}`) };
+
+export const paymentAPI = {
+  createIntent: (d: any) => api.post('/payments/intent', d),
+  recordCash: (d: any) => api.post('/payments/cash', d),
+  myPayments: () => api.get('/payments/my'),
+  list: (p?: any) => api.get('/payments', { params: p }),
+  get: (refCode: string) => api.get(`/payments/${refCode}`),
+};
+
+export const geoAPI = {
+  provinces: () => api.get('/geo/provinces'),
+  districts: (province?: string) => api.get('/geo/districts', { params: { province } }),
+  holidays: (year?: number) => api.get('/geo/holidays', { params: { year } }),
+  todayBs: () => api.get('/geo/today/bs'),
+};
+
+export const displayAPI = {
+  getBranch: (code: string) => api.get(`/display/branch/${code}`),
+};
+
+export const hybridAPI = {
+  linkEntities: (d: { issueId: string; appointmentId: string }) => api.post('/hybrid/link', d),
+  getUnifiedTimeline: (id: string, type: 'appointment' | 'issue') => api.get(`/hybrid/timeline/${type}/${id}`),
 };
 
 export default api;

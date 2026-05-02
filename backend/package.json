@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed": "node src/seeds/seed.js"
+    "seed": "node src/seeds/seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -23,6 +25,7 @@
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nepali-date-converter": "^3.4.0",
     "node-cron": "^3.0.3",
     "nodemailer": "^8.0.5",
     "pdfkit": "^0.15.0",
@@ -39,5 +42,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/raazkhnl/queueless"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.1.0",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.5"
   }
 }

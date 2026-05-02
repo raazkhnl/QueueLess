@@ -3,6 +3,7 @@ const ctrl = require('../controllers/appointmentTypeController');
 const { authenticate, authorize } = require('../middleware/auth');
 
 router.get('/public/org/:orgId', ctrl.getPublicByOrg);
+router.get('/public/catalogue', ctrl.getPublicCatalogue);
 router.get('/slug/:slug', ctrl.getBySlug);
 router.get('/', authenticate, authorize('super_admin','org_admin','branch_manager','staff'), ctrl.getAll);
 router.post('/', authenticate, authorize('super_admin','org_admin','branch_manager'), ctrl.create);

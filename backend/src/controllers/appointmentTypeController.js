@@ -28,15 +28,42 @@ exports.getAll = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+const PUBLIC_FIELDS = 'name nameNp slug description duration bufferTime price mode color icon customFields maxBookingsPerSlot requiresApproval sortOrder isSuspended roomNo roomNoNp organization requiredDocuments eligibility eligibilityNp feeBreakdown processingTimeDays processingTimeNote instructions instructionsNp';
+
 exports.getPublicByOrg = async (req, res, next) => {
   try {
     const { branch } = req.query;
     const query = { organization: req.params.orgId, isActive: true, isSuspended: { $ne: true } };
     if (branch) query.$or = [{ branches: branch }, { branches: { $size: 0 } }];
     const types = await AppointmentType.find(query)
-      .select('name nameNp slug description duration bufferTime price mode color icon customFields maxBookingsPerSlot requiresApproval sortOrder isSuspended roomNo roomNoNp')
+      .select(PUBLIC_FIELDS)
       .sort({ sortOrder: 1, name: 1 });
     res.json({ appointmentTypes: types });
+  } catch (error) { next(error); }
+};
+
+// Public catalogue across all orgs (search by name, filter by category).
+exports.getPublicCatalogue = async (req, res, next) => {
+  try {
+    const { search, category, organization, limit = 100 } = req.query;
+    const Organization = require('../models/Organization');
+    const orgQuery = { isActive: true };
+    if (category) orgQuery.category = category;
+    if (organization) orgQuery._id = organization;
+    const orgs = await Organization.find(orgQuery).select('_id name nameNp slug category branding').lean();
+    const orgIds = orgs.map((o) => o._id);
+
+    const typeQuery = { organization: { $in: orgIds }, isActive: true, isSuspended: { $ne: true } };
+    if (search) {
+      const re = new RegExp(String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      typeQuery.$or = [{ name: re }, { nameNp: re }, { description: re }];
+    }
+    const types = await AppointmentType.find(typeQuery).select(PUBLIC_FIELDS).limit(Number(limit)).lean();
+
+    const orgMap = Object.fromEntries(orgs.map((o) => [String(o._id), o]));
+    const enriched = types.map((t) => ({ ...t, organization: orgMap[String(t.organization)] || t.organization }));
+
+    res.json({ services: enriched, count: enriched.length });
   } catch (error) { next(error); }
 };
 

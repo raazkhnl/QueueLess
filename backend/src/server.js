@@ -100,6 +100,23 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/audit-logs', require('./routes/auditLogs'));
 app.use('/api/staff-availability', require('./routes/staffAvailability'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/issues', require('./routes/issues'));
+app.use('/api/hybrid', require('./routes/hybrid'));
+app.use('/api/issue-types', require('./routes/issueTypes'));
+app.use('/api/display', require('./routes/display'));
+app.use('/api/geo', require('./routes/geo'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/oauth/nagarik', require('./routes/oauthNagarik'));
+app.use('/api/tenants', require('./routes/tenants'));
+app.use('/api/admin/impersonate', require('./routes/impersonate'));
+app.use('/api/admin/slo', require('./routes/slo'));
+app.use('/api/me', require('./routes/dataRights'));
+app.use('/api/transparency', require('./routes/transparency'));
+
+// Per-tenant API-token authentication runs *after* JWT and applies to any
+// request bearing X-API-Key (no-op when absent).
+const { apiTokenAuth } = require('./middleware/apiToken');
+app.use('/api', apiTokenAuth);
 
 // Health check — includes MongoDB connectivity status
 app.get('/api/health', async (req, res) => {
@@ -166,6 +183,22 @@ const start = async () => {
       startNoShowCron();
     } catch (err) {
       logger.warn('No-show cron failed to start: ' + err.message);
+    }
+
+    // Start ticket SLA escalation cron
+    try {
+      const { startEscalationCron } = require('./services/escalationCron');
+      startEscalationCron();
+    } catch (err) {
+      logger.warn('Escalation cron failed to start: ' + err.message);
+    }
+
+    // Start in-process retry queue for outbound side effects
+    try {
+      const retryQueue = require('./services/retryQueue');
+      retryQueue.start({ intervalMs: 5000 });
+    } catch (err) {
+      logger.warn('Retry queue failed to start: ' + err.message);
     }
   } else {
     logger.info(`Instance ${process.env.NODE_APP_INSTANCE} skipping background crons`);

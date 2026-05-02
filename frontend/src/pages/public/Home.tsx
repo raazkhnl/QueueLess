@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Building2, Shield, ArrowRight, Search, MapPin, Zap, Users } from 'lucide-react';
+import { Calendar, Clock, Building2, Shield, ArrowRight, Search, MapPin, Zap, Users, AlertCircle, MessageSquare } from 'lucide-react';
 import { orgAPI } from '../../lib/api';
 import { useI18n } from '../../lib/i18n';
 
@@ -14,7 +14,10 @@ export default function Home() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchRef.trim()) nav(`/appointments/${searchRef.trim()}`);
+    const q = searchRef.trim();
+    if (!q) return;
+    if (/^TKT-/i.test(q)) nav(`/issue/track/${q}`);
+    else nav(`/appointments/${q}`);
   };
 
   const categoryIcons: Record<string, string> = { government: '🏛️', healthcare: '🏥', education: '🎓', finance: '🏦', salon: '💇', legal: '⚖️', other: '🏢' };
@@ -36,14 +39,17 @@ export default function Home() {
             <p className="text-lg md:text-xl text-primary-100 mb-8 max-w-xl leading-relaxed">
               {t('home.hero.subtitle')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <Link to="/book" className="inline-flex items-center justify-center gap-2 bg-white text-primary-700 rounded-xl px-6 py-3.5 font-semibold hover:bg-primary-50 transition-all shadow-lg shadow-primary-900/30">
                 {t('home.hero.cta')} <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link to="/issue/submit" className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-xl px-5 py-3.5 font-semibold hover:bg-white/20 transition-all">
+                <AlertCircle className="w-4 h-4" /> Raise an issue
               </Link>
               <form onSubmit={handleSearch} className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 px-4 py-2">
                 <Search className="w-4 h-4 text-primary-200 mr-2" />
                 <input value={searchRef} onChange={e => setSearchRef(e.target.value)}
-                  placeholder={t('home.hero.trackPlaceholder')} className="bg-transparent outline-none text-sm flex-1 placeholder:text-primary-200 min-w-[180px]" />
+                  placeholder="Track booking or ticket…" className="bg-transparent outline-none text-sm flex-1 placeholder:text-primary-200 min-w-[180px]" />
                 <button type="submit" className="text-sm font-medium text-amber-300 hover:text-amber-200 ml-2">{t('home.hero.track')}</button>
               </form>
             </div>
@@ -73,6 +79,39 @@ export default function Home() {
                 <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Issue / Grievance CTA */}
+      <section className="py-14 bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-900 p-6 md:p-10 grid md:grid-cols-3 gap-6 items-center">
+            <div className="md:col-span-2">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 px-3 py-1 rounded-full mb-3">
+                <MessageSquare className="w-3.5 h-3.5" /> Tickets &amp; Grievances
+              </div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2">Something went wrong? Tell us directly.</h2>
+              <p className="text-slate-600 dark:text-slate-300 mb-4 max-w-2xl">
+                File a complaint, report a portal error, or request a document — with or without an existing appointment.
+                Each ticket gets a tracking ID, an SLA deadline, and a transparent activity trail.
+              </p>
+              <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-slate-600 dark:text-slate-300 mb-5">
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Raise standalone or after an appointment</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Auto-route to the right office &amp; staff</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Reply, attach files, reopen if unresolved</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Book a follow-up appointment from a ticket</li>
+              </ul>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/issue/submit" className="btn-primary"><AlertCircle className="w-4 h-4" /> Raise a ticket</Link>
+                <Link to="/my-issues" className="btn-secondary">My tickets</Link>
+              </div>
+            </div>
+            <div className="hidden md:flex justify-end">
+              <div className="w-44 h-44 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-600/30 rotate-3">
+                <AlertCircle className="w-20 h-20" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -146,6 +185,11 @@ export default function Home() {
               RaaZ Khanal @raazkhnl
             </a>
             {' '}· MIT License
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+            <Link to="/transparency" className="hover:underline">Public transparency board</Link>
+            {' · '}
+            <Link to="/services" className="hover:underline">Service catalogue</Link>
           </p>
         </div>
       </footer>

@@ -5,6 +5,7 @@
  */
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
+const { formatBs } = require('../utils/nepaliDate');
 
 const generateAppointmentPDF = async (appointment, organization, branch, appointmentType) => {
   return new Promise(async (resolve, reject) => {
@@ -43,16 +44,21 @@ const generateAppointmentPDF = async (appointment, organization, branch, appoint
       doc.fill('#1e293b').fontSize(24).font('Helvetica-Bold').text(`#${appointment.tokenNumber}`, 315, 198);
 
       // -- Detail rows --
+      let bsDate = '—';
+      try { bsDate = formatBs(appointment.date, { mode: 'long', lang: 'en' }); } catch {}
+
       const details = [
         ['Service', appointmentType.nameNp ? `${appointmentType.name} (${appointmentType.nameNp})` : appointmentType.name],
         ['Room/Section', appointment.roomNo ? (appointment.roomNoNp ? `${appointment.roomNo} (${appointment.roomNoNp})` : appointment.roomNo) : 'N/A'],
         ['Mode', appointment.mode === 'virtual' ? 'Virtual (Online)' : 'In-Person'],
-        ['Date', new Date(appointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })],
+        ['Date (AD)', new Date(appointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })],
+        ['Date (BS)', bsDate],
         ['Time', `${appointment.startTime} - ${appointment.endTime}`],
         ['Duration', `${appointment.duration} minutes`],
         ['Status', appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)],
         ['Name', appointment.guestName || 'Registered User'],
       ];
+      if (appointment.fileNumber) details.push(['File No. (दर्ता)', appointment.fileNumber]);
       if (appointment.price > 0) details.push(['Price', `NPR ${appointment.price}`]);
 
       let y = 252;
@@ -69,10 +75,23 @@ const generateAppointmentPDF = async (appointment, organization, branch, appoint
       doc.image(qrBuffer, 50, qrY + 16, { width: 100, height: 100 });
       doc.fill('#64748b').fontSize(8).font('Helvetica').text(qrUrl, 160, qrY + 40, { width: 300 });
 
+      // -- Stamp / Seal placeholder (gov-style) --
+      const stampX = 430, stampY = qrY + 6;
+      doc.save();
+      doc.lineWidth(1.5).strokeColor('#7f1d1d').circle(stampX + 55, stampY + 55, 55).stroke();
+      doc.lineWidth(0.5).circle(stampX + 55, stampY + 55, 48).stroke();
+      doc.fill('#7f1d1d').fontSize(7).font('Helvetica-Bold')
+        .text((organization.name || '').toUpperCase().slice(0, 28), stampX, stampY + 32, { width: 110, align: 'center' });
+      doc.fontSize(6).font('Helvetica')
+        .text(`No. ${appointment.fileNumber || appointment.refCode}`, stampX, stampY + 60, { width: 110, align: 'center' });
+      doc.fontSize(6)
+        .text(bsDate, stampX, stampY + 72, { width: 110, align: 'center' });
+      doc.restore();
+
       // -- Footer (on same page) --
       doc.fill('#94a3b8').fontSize(7).font('Helvetica')
         .text(
-          `Generated on ${new Date().toLocaleString()} | QueueLess - Dynamic Appointment Booking System`,
+          `Generated on ${new Date().toLocaleString()} (BS ${formatBs(new Date(), { mode: 'short', lang: 'en' })}) | QueueLess`,
           50, 760, { align: 'center', width: 495 }
         );
 
